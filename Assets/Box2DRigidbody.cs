@@ -28,6 +28,7 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         var bodyDefinition = new BodyDef();
         bodyDefinition.MassData = new MassData();
         bodyDefinition.MassData.Mass = _originalRigidbody.mass < 0.1f ? 0f : _originalRigidbody.mass;
+        bodyDefinition.MassData.I = _originalRigidbody.mass < 0.1f ? 0f : _originalRigidbody.mass;
         bodyDefinition.Position = _originalRigidbody.position;
         bodyDefinition.Angle = transform.eulerAngles.z * Mathf.Deg2Rad;
         // bodyDefinition.FixedRotation = _originalRigidbody.freezeRotation;
@@ -85,11 +86,11 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         }
         transform.position = body.GetPosition();
         transform.eulerAngles = new Vector3(0f, 0f, body.GetAngle() * Mathf.Rad2Deg);
-        Debug.Log(body.IsDynamic());
+        // Debug.Log(body.IsDynamic());
         // Debug.Log(body._xf.position);
-        Debug.Log(body.GetAngle());
+        // Debug.Log(body.GetAngle());
         // Debug.Log(body.GetFixtureList().ShapeType);
-        Debug.Log(body.GetFixtureList().Density);
+        // Debug.Log(body.GetFixtureList().Density);
         // Debug.Log(body.GetType());
         // Debug.Log(body.GetPosition());
 
