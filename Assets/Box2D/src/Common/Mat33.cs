@@ -24,7 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Common
@@ -60,14 +60,15 @@ namespace Box2DX.Common
 		/// </summary>
 		public Vector3 Solve33(Vector3 b)
 		{
-			float det = Vector3.Dot(Col1, Vector3.Cross(Col2, Col3));
-			Box2DXDebug.Assert(det != 0.0f);
-			det = 1.0f / det;
-			Vector3 x = new Vector3();
-			x.x = det * Vector3.Dot(b, Vector3.Cross(Col2, Col3));
-			x.y = det * Vector3.Dot(Col1, Vector3.Cross(b, Col3));
-			x.z = det * Vector3.Dot(Col1, Vector3.Cross(Col2, b));
-			return x;
+			// sfloat det = Vector3.Dot(Col1, Vector3.Cross(Col2, Col3));
+			// Box2DXDebug.Assert(det != 0.0f);
+			// det = 1.0f / det;
+			// Vector3 x = new Vector3();
+			// x.x = det * Vector3.Dot(b, Vector3.Cross(Col2, Col3));
+			// x.y = det * Vector3.Dot(Col1, Vector3.Cross(b, Col3));
+			// x.z = det * Vector3.Dot(Col1, Vector3.Cross(Col2, b));
+			// return x;
+			return Vector3.zero;
 		}
 
 		/// <summary>
@@ -77,14 +78,15 @@ namespace Box2DX.Common
 		/// </summary>
 		public Vector2 Solve22(Vector2 b)
 		{
-			float a11 = Col1.x, a12 = Col2.x, a21 = Col1.y, a22 = Col2.y;
-			float det = a11 * a22 - a12 * a21;
-			Box2DXDebug.Assert(det != 0.0f);
-			det = 1.0f / det;
-			Vector2 x = new Vector2();
-			x.x = det * (a22 * b.x - a12 * b.y);
-			x.y = det * (a11 * b.y - a21 * b.x);
-			return x;
+			// sfloat a11 = Col1.x, a12 = Col2.x, a21 = Col1.y, a22 = Col2.y;
+			// sfloat det = a11 * a22 - a12 * a21;
+			// Box2DXDebug.Assert(det != 0.0f);
+			// det = 1.0f / det;
+			// Vector2 x = new Vector2();
+			// x.x = det * (a22 * b.x - a12 * b.y);
+			// x.y = det * (a11 * b.y - a21 * b.x);
+			// return x;
+			return Vector3.zero;
 		}
 
 		public Vector3 Col1;

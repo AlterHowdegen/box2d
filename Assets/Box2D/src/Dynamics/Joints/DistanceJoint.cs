@@ -39,6 +39,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Dynamics
@@ -56,50 +57,50 @@ namespace Box2DX.Dynamics
 		public DistanceJointDef()
 		{
 			Type = JointType.DistanceJoint;
-			LocalAnchor1 = Vector2.zero;
-			LocalAnchor2 = Vector2.zero;
-			Length = 1.0f;
-			FrequencyHz = 0.0f;
-			DampingRatio = 0.0f;
+			LocalAnchor1 = sVector2.zero;
+			LocalAnchor2 = sVector2.zero;
+			Length = sfloat.One;
+			FrequencyHz = sfloat.Zero;
+			DampingRatio = sfloat.Zero;
 		}
 
 		/// <summary>
 		/// Initialize the bodies, anchors, and length using the world anchors.
 		/// </summary>
-		public void Initialize(Body body1, Body body2, Vector2 anchor1, Vector2 anchor2)
+		public void Initialize(Body body1, Body body2, sVector2 anchor1, sVector2 anchor2)
 		{
 			Body1 = body1;
 			Body2 = body2;
 			LocalAnchor1 = body1.GetLocalPoint(anchor1);
 			LocalAnchor2 = body2.GetLocalPoint(anchor2);
-			Vector2 d = anchor2 - anchor1;
+			sVector2 d = anchor2 - anchor1;
 			Length = d.magnitude;
 		}
 
 		/// <summary>
 		/// The local anchor point relative to body1's origin.
 		/// </summary>
-		public Vector2 LocalAnchor1;
+		public sVector2 LocalAnchor1;
 
 		/// <summary>
 		/// The local anchor point relative to body2's origin.
 		/// </summary>
-		public Vector2 LocalAnchor2;
+		public sVector2 LocalAnchor2;
 
 		/// <summary>
 		/// The equilibrium length between the anchor points.
 		/// </summary>
-		public float Length;
+		public sfloat Length;
 
 		/// <summary>
 		/// The response speed.
 		/// </summary>
-		public float FrequencyHz;
+		public sfloat FrequencyHz;
 
 		/// <summary>
 		/// The damping ratio. 0 = no damping, 1 = critical damping.
 		/// </summary>
-		public float DampingRatio;
+		public sfloat DampingRatio;
 	}
 
 	/// <summary>
@@ -109,35 +110,35 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public class DistanceJoint : Joint
 	{
-		public Vector2 _localAnchor1;
-		public Vector2 _localAnchor2;
-		public Vector2 _u;
-		public float _frequencyHz;
-		public float _dampingRatio;
-		public float _gamma;
-		public float _bias;
-		public float _impulse;
-		public float _mass;		// effective mass for the constraint.
-		public float _length;
+		public sVector2 _localAnchor1;
+		public sVector2 _localAnchor2;
+		public sVector2 _u;
+		public sfloat _frequencyHz;
+		public sfloat _dampingRatio;
+		public sfloat _gamma;
+		public sfloat _bias;
+		public sfloat _impulse;
+		public sfloat _mass;		// effective mass for the constraint.
+		public sfloat _length;
 
-		public override Vector2 Anchor1
+		public override sVector2 Anchor1
 		{
 			get { return _body1.GetWorldPoint(_localAnchor1);}
 		}
 
-		public override Vector2 Anchor2
+		public override sVector2 Anchor2
 		{
 			get { return _body2.GetWorldPoint(_localAnchor2);}
 		}
 
-		public override Vector2 GetReactionForce(float inv_dt)
+		public override sVector2 GetReactionForce(sfloat inv_dt)
 		{
 			return (inv_dt * _impulse) * _u;
 		}
 
-		public override float GetReactionTorque(float inv_dt)
+		public override sfloat GetReactionTorque(sfloat inv_dt)
 		{
-			return 0.0f;
+			return sfloat.Zero;
 		}
 
 		public DistanceJoint(DistanceJointDef def)
@@ -148,9 +149,9 @@ namespace Box2DX.Dynamics
 			_length = def.Length;
 			_frequencyHz = def.FrequencyHz;
 			_dampingRatio = def.DampingRatio;
-			_impulse = 0.0f;
-			_gamma = 0.0f;
-			_bias = 0.0f;
+			_impulse = sfloat.Zero;
+			_gamma = sfloat.Zero;
+			_bias = sfloat.Zero;
 		}
 
 		internal override void InitVelocityConstraints(TimeStep step)
@@ -159,52 +160,52 @@ namespace Box2DX.Dynamics
 			Body b2 = _body2;
 
 			// Compute the effective mass matrix.
-			Vector2 r1 = b1.GetTransform().TransformDirection(_localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
+			sVector2 r1 = b1.GetTransform().TransformDirection(_localAnchor1 - b1.GetLocalCenter());
+			sVector2 r2 = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
 			_u = b2._sweep.C + r2 - b1._sweep.C - r1;
 
 			// Handle singularity.
-			float length = _u.magnitude;
+			sfloat length = _u.magnitude;
 			if (length > Settings.LinearSlop)
 			{
-				_u *= 1.0f / length;
+				_u *= sfloat.One / length;
 			}
 			else
 			{
-				_u = Vector2.zero;
+				_u = sVector2.zero;
 			}
 
-			float cr1u = r1.Cross(_u);
-			float cr2u = r2.Cross(_u);
-			float invMass = b1._invMass + b1._invI * cr1u * cr1u + b2._invMass + b2._invI * cr2u * cr2u;
+			sfloat cr1u = r1.Cross(_u);
+			sfloat cr2u = r2.Cross(_u);
+			sfloat invMass = b1._invMass + b1._invI * cr1u * cr1u + b2._invMass + b2._invI * cr2u * cr2u;
 			Box2DXDebug.Assert(invMass > Settings.FLT_EPSILON);
-			_mass = 1.0f / invMass;
+			_mass = sfloat.One / invMass;
 
-			if (_frequencyHz > 0.0f)
+			if (_frequencyHz > sfloat.Zero)
 			{
-				float C = length - _length;
+				sfloat C = length - _length;
 
 				// Frequency
-				float omega = 2.0f * Settings.Pi * _frequencyHz;
+				sfloat omega = (sfloat)2.0f * Settings.Pi * _frequencyHz;
 
 				// Damping coefficient
-				float d = 2.0f * _mass * _dampingRatio * omega;
+				sfloat d = (sfloat)2.0f * _mass * _dampingRatio * omega;
 
 				// Spring stiffness
-				float k = _mass * omega * omega;
+				sfloat k = _mass * omega * omega;
 
 				// magic formulas
-				_gamma = 1.0f / (step.Dt * (d + step.Dt * k));
+				_gamma = sfloat.One / (step.Dt * (d + step.Dt * k));
 				_bias = C * step.Dt * k * _gamma;
 
-				_mass = 1.0f / (invMass + _gamma);
+				_mass = sfloat.One / (invMass + _gamma);
 			}
 
 			if (step.WarmStarting)
 			{
 				//Scale the inpulse to support a variable timestep.
 				_impulse *= step.DtRatio;
-				Vector2 P = _impulse * _u;
+				sVector2 P = _impulse * _u;
 				b1._linearVelocity -= b1._invMass * P;
 				b1._angularVelocity -= b1._invI * r1.Cross(P);
 				b2._linearVelocity += b2._invMass * P;
@@ -212,13 +213,13 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				_impulse = 0.0f;
+				_impulse = sfloat.Zero;
 			}
 		}
 
-		internal override bool SolvePositionConstraints(float baumgarte)
+		internal override bool SolvePositionConstraints(sfloat baumgarte)
 		{
-			if (_frequencyHz > 0.0f)
+			if (_frequencyHz > sfloat.Zero)
 			{
 				//There is no possition correction for soft distace constraint.
 				return true;
@@ -227,19 +228,19 @@ namespace Box2DX.Dynamics
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 r1 = b1.GetTransform().TransformDirection(_localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
+			sVector2 r1 = b1.GetTransform().TransformDirection(_localAnchor1 - b1.GetLocalCenter());
+			sVector2 r2 = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
 
-			Vector2 d = b2._sweep.C + r2 - b1._sweep.C - r1;
+			sVector2 d = b2._sweep.C + r2 - b1._sweep.C - r1;
 
-			float length = d.magnitude;
+			sfloat length = d.magnitude;
 			d.Normalize();
-			float C = length - _length;
-			C = Mathf.Clamp(C, -Settings.MaxLinearCorrection, Settings.MaxLinearCorrection);
+			sfloat C = length - _length;
+			C = libm.Clamp(C, -Settings.MaxLinearCorrection, Settings.MaxLinearCorrection);
 
-			float impulse = -_mass * C;
+			sfloat impulse = -_mass * C;
 			_u = d;
-			Vector2 P = impulse * _u;
+			sVector2 P = impulse * _u;
 
 			b1._sweep.C -= b1._invMass * P;
 			b1._sweep.A -= b1._invI * r1.Cross(P);
@@ -249,7 +250,7 @@ namespace Box2DX.Dynamics
 			b1.SynchronizeTransform();
 			b2.SynchronizeTransform();
 
-			return System.Math.Abs(C) < Settings.LinearSlop;
+			return sfloat.Abs(C) < Settings.LinearSlop;
 		}
 
 		internal override void SolveVelocityConstraints(TimeStep step)
@@ -259,17 +260,17 @@ namespace Box2DX.Dynamics
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 r1 = b1.GetTransform().TransformDirection( _localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
+			sVector2 r1 = b1.GetTransform().TransformDirection( _localAnchor1 - b1.GetLocalCenter());
+			sVector2 r2 = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
 
 			// Cdot = dot(u, v + cross(w, r))
-			Vector2 v1 = b1._linearVelocity + r1.CrossScalarPreMultiply(b1._angularVelocity);
-			Vector2 v2 = b2._linearVelocity + r2.CrossScalarPreMultiply(b2._angularVelocity);
-			float Cdot = Vector2.Dot(_u, v2 - v1);
-			float impulse = -_mass * (Cdot + _bias + _gamma * _impulse);
+			sVector2 v1 = b1._linearVelocity + r1.CrossScalarPreMultiply(b1._angularVelocity);
+			sVector2 v2 = b2._linearVelocity + r2.CrossScalarPreMultiply(b2._angularVelocity);
+			sfloat Cdot = sVector2.Dot(_u, v2 - v1);
+			sfloat impulse = -_mass * (Cdot + _bias + _gamma * _impulse);
 			_impulse += impulse;
 
-			Vector2 P = impulse * _u;
+			sVector2 P = impulse * _u;
 			b1._linearVelocity -= b1._invMass * P;
 			b1._angularVelocity -= b1._invI * r1.Cross(P);
 			b2._linearVelocity += b2._invMass * P;

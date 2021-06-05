@@ -26,14 +26,15 @@ using Box2DX.Collision;
 using UnityEngine;
 
 using Transform = Box2DX.Common.Transform;
+using SoftFloat;
 
 namespace Box2DX.Dynamics
 {
 	public struct TimeStep
 	{
-		public float Dt; // time step
-		public float Inv_Dt; // inverse time step (0 if dt == 0).
-		public float DtRatio;	// dt * inv_dt0
+		public sfloat Dt; // time step
+		public sfloat Inv_Dt; // inverse time step (0 if dt == 0).
+		public sfloat DtRatio;	// dt * inv_dt0
 		public int VelocityIterations;
 		public int PositionIterations;
 		public bool WarmStarting;
@@ -54,7 +55,7 @@ namespace Box2DX.Dynamics
 		private Joint _jointList;
 		private Controllers.Controller _controllerList;
 
-		private Vector2 _raycastNormal;
+		private sVector2 _raycastNormal;
 		private object _raycastUserData;
 		private Segment _raycastSegment;
 		private bool _raycastSolidShape;
@@ -67,11 +68,11 @@ namespace Box2DX.Dynamics
 		private int _jointCount;
 		private int _controllerCount;
 
-		private Vector2 _gravity;
+		private sVector2 _gravity;
 		/// <summary>
 		/// Get\Set global gravity vector.
 		/// </summary>
-		public Vector2 Gravity { get { return _gravity; } set { _gravity = value; } }
+		public sVector2 Gravity { get { return _gravity; } set { _gravity = value; } }
 
 		private bool _allowSleep;
 
@@ -85,7 +86,7 @@ namespace Box2DX.Dynamics
 
 		// This is used to compute the time step ratio to
 		// support a variable time step.
-		private float _inv_dt0;
+		private sfloat _inv_dt0;
 
 		// This is for debugging the solver.
 		private bool _warmStarting;
@@ -99,7 +100,7 @@ namespace Box2DX.Dynamics
 		/// <param name="worldAABB">A bounding box that completely encompasses all your shapes.</param>
 		/// <param name="gravity">The world gravity vector.</param>
 		/// <param name="doSleep">Improve performance by not simulating inactive bodies.</param>
-		public World(AABB worldAABB, Vector2 gravity, bool doSleep)
+		public World(AABB worldAABB, sVector2 gravity, bool doSleep)
 		{
 			_destructionListener = null;
 			_boundaryListener = null;
@@ -123,7 +124,7 @@ namespace Box2DX.Dynamics
 
 			_lock = false;
 
-			_inv_dt0 = 0.0f;
+			_inv_dt0 = sfloat.Zero;
 
 			_contactManager = new ContactManager();
 			_contactManager._world = this;
@@ -573,7 +574,7 @@ namespace Box2DX.Dynamics
 		/// <param name="dt">The amount of time to simulate, this should not vary.</param>
 		/// <param name="iterations">For the velocity constraint solver.</param>
 		/// <param name="iterations">For the positionconstraint solver.</param>
-		public void Step(float dt, int velocityIterations, int positionIteration)
+		public void Step(sfloat dt, int velocityIterations, int positionIteration)
 		{
 			_lock = true;
 
@@ -581,13 +582,13 @@ namespace Box2DX.Dynamics
 			step.Dt = dt;
 			step.VelocityIterations = velocityIterations;
 			step.PositionIterations = positionIteration;
-			if (dt > 0.0f)
+			if (dt > sfloat.Zero)
 			{
-				step.Inv_Dt = 1.0f / dt;
+				step.Inv_Dt = sfloat.One / dt;
 			}
 			else
 			{
-				step.Inv_Dt = 0.0f;
+				step.Inv_Dt = sfloat.Zero;
 			}
 
 			step.DtRatio = _inv_dt0 * dt;
@@ -598,13 +599,13 @@ namespace Box2DX.Dynamics
 			_contactManager.Collide();
 
 			// Integrate velocities, solve velocity constraints, and integrate positions.
-			if (step.Dt > 0.0f)
+			if (step.Dt > sfloat.Zero)
 			{
 				Solve(step);
 			}
 
 			// Handle TOI events.
-			if (_continuousPhysics && step.Dt > 0.0f)
+			if (_continuousPhysics && step.Dt > sfloat.Zero)
 			{
 				SolveTOI(step);
 			}
@@ -683,12 +684,12 @@ namespace Box2DX.Dynamics
 		/// <param name="solidShapes">Determines if shapes that the ray starts in are counted as hits.</param>
 		/// <param name="userData"></param>
 		/// <returns>Returns the colliding shape shape, or null if not found.</returns>
-		public Fixture RaycastOne(Segment segment, out float lambda, out Vector2 normal, bool solidShapes, object userData)
+		public Fixture RaycastOne(Segment segment, out sfloat lambda, out sVector2 normal, bool solidShapes, object userData)
 		{
 			int maxCount = 1;
 			Fixture[] fixture;
-			lambda = 0.0f;
-			normal = new Vector2();
+			lambda = sfloat.Zero;
+			normal = new sVector2();
 
 			int count = Raycast(segment, out fixture, maxCount, solidShapes, userData);
 
@@ -699,7 +700,7 @@ namespace Box2DX.Dynamics
 
 			//Redundantly do TestSegment a second time, as the previous one's results are inaccessible
 
-			fixture[0].TestSegment(out lambda, out normal, segment, 1);
+			fixture[0].TestSegment(out lambda, out normal, segment, sfloat.One);
 			//We already know it returns true
 			return fixture[0];
 		}
@@ -891,7 +892,7 @@ namespace Box2DX.Dynamics
 			for (Body b = _bodyList; b != null; b = b._next)
 			{
 				b._flags &= ~Body.BodyFlags.Island;
-				b._sweep.T0 = 0.0f;
+				b._sweep.T0 = sfloat.Zero;
 			}
 
 			for (Contact c = _contactList; c != null; c = c._next)
@@ -910,7 +911,7 @@ namespace Box2DX.Dynamics
 			{
 				// Find the first TOI.
 				Contact minContact = null;
-				float minTOI = 1.0f;
+				sfloat minTOI = sfloat.One;
 
 				for (Contact c = _contactList; c != null; c = c._next)
 				{
@@ -921,7 +922,7 @@ namespace Box2DX.Dynamics
 
 					// TODO_ERIN keep a counter on the contact, only respond to M TOIs per contact.
 
-					float toi = 1.0f;
+					sfloat toi = sfloat.One;
 					if ((int)(c._flags & Contact.CollisionFlags.Toi) == 1)
 					{
 						// This contact has a valid cached TOI.
@@ -941,7 +942,7 @@ namespace Box2DX.Dynamics
 						}
 
 						// Put the sweeps onto the same time interval.
-						float t0 = b1._sweep.T0;
+						sfloat t0 = b1._sweep.T0;
 
 						if (b1._sweep.T0 < b2._sweep.T0)
 						{
@@ -954,19 +955,19 @@ namespace Box2DX.Dynamics
 							b2._sweep.Advance(t0);
 						}
 
-						Box2DXDebug.Assert(t0 < 1.0f);
+						Box2DXDebug.Assert(t0 < sfloat.One);
 
 						// Compute the time of impact.
 						toi = c.ComputeTOI(b1._sweep, b2._sweep);
 						//b2TimeOfImpact(c->m_fixtureA->GetShape(), b1->m_sweep, c->m_fixtureB->GetShape(), b2->m_sweep);
 
-						Box2DXDebug.Assert(0.0f <= toi && toi <= 1.0f);
+						Box2DXDebug.Assert(sfloat.Zero <= toi && toi <= sfloat.One);
 
 						// If the TOI is in range ...
-						if (0.0f < toi && toi < 1.0f)
+						if (sfloat.Zero < toi && toi < sfloat.One)
 						{
 							// Interpolate on the actual range.
-							toi = Common.Math.Min((1.0f - toi) * t0 + toi, 1.0f);
+							toi = Common.Math.Min((sfloat.One - toi) * t0 + toi, sfloat.One);
 						}
 
 
@@ -974,7 +975,7 @@ namespace Box2DX.Dynamics
 						c._flags |= Contact.CollisionFlags.Toi;
 					}
 
-					if (Mathf.Epsilon < toi && toi < minTOI)
+					if (sfloat.Epsilon < toi && toi < minTOI)
 					{
 						// This is the minimum TOI found so far.
 						minContact = c;
@@ -982,7 +983,7 @@ namespace Box2DX.Dynamics
 					}
 				}
 
-				if (minContact == null || 1.0f - 100.0f * Mathf.Epsilon < minTOI)
+				if (minContact == null || sfloat.One - (sfloat)100.0f * sfloat.Epsilon < minTOI)
 				{
 					// No more TOI events. Done!
 					break;
@@ -1125,9 +1126,9 @@ namespace Box2DX.Dynamics
 
 				TimeStep subStep;
 				subStep.WarmStarting = false;
-				subStep.Dt = (1.0f - minTOI) * step.Dt;
-				subStep.Inv_Dt = 1.0f / subStep.Dt;
-				subStep.DtRatio = 0.0f;
+				subStep.Dt = (sfloat.One - minTOI) * step.Dt;
+				subStep.Inv_Dt = sfloat.One / subStep.Dt;
+				subStep.DtRatio = sfloat.Zero;
 				subStep.VelocityIterations = step.VelocityIterations;
 				subStep.PositionIterations = step.PositionIterations;
 
@@ -1197,10 +1198,10 @@ namespace Box2DX.Dynamics
 			Body b2 = joint.GetBody2();
 			Transform xf1 = b1.GetTransform();
 			Transform xf2 = b2.GetTransform();
-			Vector2 x1 = xf1.position;
-			Vector2 x2 = xf2.position;
-			Vector2 p1 = joint.Anchor1;
-			Vector2 p2 = joint.Anchor2;
+			sVector2 x1 = xf1.position;
+			sVector2 x2 = xf2.position;
+			sVector2 p1 = joint.Anchor1;
+			sVector2 p2 = joint.Anchor2;
 
 			Color color = new Color(0.5f, 0.8f, 0.8f);
 
@@ -1213,8 +1214,8 @@ namespace Box2DX.Dynamics
 				case JointType.PulleyJoint:
 					{
 						PulleyJoint pulley = (PulleyJoint)joint;
-						Vector2 s1 = pulley.GroundAnchor1;
-						Vector2 s2 = pulley.GroundAnchor2;
+						sVector2 s1 = pulley.GroundAnchor1;
+						sVector2 s2 = pulley.GroundAnchor2;
 						_debugDraw.DrawSegment(s1, p1, color);
 						_debugDraw.DrawSegment(s2, p2, color);
 						_debugDraw.DrawSegment(s1, s2, color);
@@ -1244,9 +1245,9 @@ namespace Box2DX.Dynamics
 					{
 						CircleShape circle = (CircleShape)fixture.Shape;
 
-						Vector2 center = xf.TransformPoint(circle._position);
-						float radius = circle._radius;
-						// [CHRISK] FIXME Vector2 axis = xf.R.Col1;
+						sVector2 center = xf.TransformPoint(circle._position);
+						sfloat radius = circle._radius;
+						// [CHRISK] FIXME sVector2 axis = xf.R.Col1;
 
 						//_debugDraw.DrawSolidCircle(center, radius, axis, color);
 					}
@@ -1256,10 +1257,10 @@ namespace Box2DX.Dynamics
 					{
 						PolygonShape poly = (PolygonShape)fixture.Shape;
 						int vertexCount = poly._vertexCount;
-						Vector2[] localVertices = poly._vertices;
+						sVector2[] localVertices = poly._vertices;
 
 						Box2DXDebug.Assert(vertexCount <= Settings.MaxPolygonVertices);
-						Vector2[] vertices = new Vector2[Settings.MaxPolygonVertices];
+						sVector2[] vertices = new sVector2[Settings.MaxPolygonVertices];
 
 						for (int i = 0; i < vertexCount; ++i)
 						{
@@ -1336,7 +1337,7 @@ namespace Box2DX.Dynamics
 			if ((flags & DebugDraw.DrawFlags.Pair) != 0)
 			{
 				BroadPhase bp = _broadPhase;
-				Vector2 invQ = new Vector2(1.0f / bp._quantizationFactor.x, 1.0f / bp._quantizationFactor.y);
+				sVector2 invQ = new sVector2(sfloat.One / bp._quantizationFactor.x, sfloat.One / bp._quantizationFactor.y);
 				Color color = new Color(0.9f, 0.9f, 0.3f);
 
 				for (int i = 0; i < PairManager.TableCapacity; ++i)
@@ -1349,17 +1350,17 @@ namespace Box2DX.Dynamics
 						Proxy p2 = bp._proxyPool[pair.ProxyId2];
 
 						AABB b1 = new AABB(), b2 = new AABB();
-						b1.LowerBound.x = bp._worldAABB.LowerBound.x + invQ.x * bp._bounds[0][p1.LowerBounds[0]].Value;
-						b1.LowerBound.y = bp._worldAABB.LowerBound.y + invQ.y * bp._bounds[1][p1.LowerBounds[1]].Value;
-						b1.UpperBound.x = bp._worldAABB.LowerBound.x + invQ.x * bp._bounds[0][p1.UpperBounds[0]].Value;
-						b1.UpperBound.y = bp._worldAABB.LowerBound.y + invQ.y * bp._bounds[1][p1.UpperBounds[1]].Value;
-						b2.LowerBound.x = bp._worldAABB.LowerBound.x + invQ.x * bp._bounds[0][p2.LowerBounds[0]].Value;
-						b2.LowerBound.y = bp._worldAABB.LowerBound.y + invQ.y * bp._bounds[1][p2.LowerBounds[1]].Value;
-						b2.UpperBound.x = bp._worldAABB.LowerBound.x + invQ.x * bp._bounds[0][p2.UpperBounds[0]].Value;
-						b2.UpperBound.y = bp._worldAABB.LowerBound.y + invQ.y * bp._bounds[1][p2.UpperBounds[1]].Value;
+						b1.LowerBound.x = bp._worldAABB.LowerBound.x + invQ.x * (sfloat)bp._bounds[0][p1.LowerBounds[0]].Value;
+						b1.LowerBound.y = bp._worldAABB.LowerBound.y + invQ.y * (sfloat)bp._bounds[1][p1.LowerBounds[1]].Value;
+						b1.UpperBound.x = bp._worldAABB.LowerBound.x + invQ.x * (sfloat)bp._bounds[0][p1.UpperBounds[0]].Value;
+						b1.UpperBound.y = bp._worldAABB.LowerBound.y + invQ.y * (sfloat)bp._bounds[1][p1.UpperBounds[1]].Value;
+						b2.LowerBound.x = bp._worldAABB.LowerBound.x + invQ.x * (sfloat)bp._bounds[0][p2.LowerBounds[0]].Value;
+						b2.LowerBound.y = bp._worldAABB.LowerBound.y + invQ.y * (sfloat)bp._bounds[1][p2.LowerBounds[1]].Value;
+						b2.UpperBound.x = bp._worldAABB.LowerBound.x + invQ.x * (sfloat)bp._bounds[0][p2.UpperBounds[0]].Value;
+						b2.UpperBound.y = bp._worldAABB.LowerBound.y + invQ.y * (sfloat)bp._bounds[1][p2.UpperBounds[1]].Value;
 
-						Vector2 x1 = 0.5f * (b1.LowerBound + b1.UpperBound);
-						Vector2 x2 = 0.5f * (b2.LowerBound + b2.UpperBound);
+						sVector2 x1 = (sfloat)0.5f * (b1.LowerBound + b1.UpperBound);
+						sVector2 x2 =(sfloat) 0.5f * (b2.LowerBound + b2.UpperBound);
 
 						_debugDraw.DrawSegment(x1, x2, color);
 
@@ -1371,10 +1372,10 @@ namespace Box2DX.Dynamics
 			if ((flags & DebugDraw.DrawFlags.Aabb) != 0)
 			{
 				BroadPhase bp = _broadPhase;
-				Vector2 worldLower = bp._worldAABB.LowerBound;
-				Vector2 worldUpper = bp._worldAABB.UpperBound;
+				sVector2 worldLower = bp._worldAABB.LowerBound;
+				sVector2 worldUpper = bp._worldAABB.UpperBound;
 
-				Vector2 invQ = new Vector2(1.0f / bp._quantizationFactor.x, 1.0f / bp._quantizationFactor.y);
+				sVector2 invQ = new sVector2(sfloat.One / bp._quantizationFactor.x, sfloat.One / bp._quantizationFactor.y);
 				Color color = new Color(0.9f, 0.3f, 0.9f);
 				for (int i = 0; i < Settings.MaxProxies; ++i)
 				{
@@ -1385,25 +1386,25 @@ namespace Box2DX.Dynamics
 					}
 
 					AABB b = new AABB();
-					b.LowerBound.x = worldLower.x + invQ.x * bp._bounds[0][p.LowerBounds[0]].Value;
-					b.LowerBound.y = worldLower.y + invQ.y * bp._bounds[1][p.LowerBounds[1]].Value;
-					b.UpperBound.x = worldLower.x + invQ.x * bp._bounds[0][p.UpperBounds[0]].Value;
-					b.UpperBound.y = worldLower.y + invQ.y * bp._bounds[1][p.UpperBounds[1]].Value;
+					b.LowerBound.x = worldLower.x + invQ.x * (sfloat)bp._bounds[0][p.LowerBounds[0]].Value;
+					b.LowerBound.y = worldLower.y + invQ.y * (sfloat)bp._bounds[1][p.LowerBounds[1]].Value;
+					b.UpperBound.x = worldLower.x + invQ.x * (sfloat)bp._bounds[0][p.UpperBounds[0]].Value;
+					b.UpperBound.y = worldLower.y + invQ.y * (sfloat)bp._bounds[1][p.UpperBounds[1]].Value;
 
-					Vector2[] vs1 = new Vector2[4];
-					vs1[0] = new Vector2(b.LowerBound.x, b.LowerBound.y);
-					vs1[1] = new Vector2(b.UpperBound.x, b.LowerBound.y);
-					vs1[2] = new Vector2(b.UpperBound.x, b.UpperBound.y);
-					vs1[3] = new Vector2(b.LowerBound.x, b.UpperBound.y);
+					sVector2[] vs1 = new sVector2[4];
+					vs1[0] = new sVector2(b.LowerBound.x, b.LowerBound.y);
+					vs1[1] = new sVector2(b.UpperBound.x, b.LowerBound.y);
+					vs1[2] = new sVector2(b.UpperBound.x, b.UpperBound.y);
+					vs1[3] = new sVector2(b.LowerBound.x, b.UpperBound.y);
 
 					_debugDraw.DrawPolygon(vs1, 4, color);
 				}
 
-				Vector2[] vs = new Vector2[4];
-				vs[0] = new Vector2(worldLower.x, worldLower.y);
-				vs[1] = new Vector2(worldUpper.x, worldLower.y);
-				vs[2] = new Vector2(worldUpper.x, worldUpper.y);
-				vs[3] = new Vector2(worldLower.x, worldUpper.y);
+				sVector2[] vs = new sVector2[4];
+				vs[0] = new sVector2(worldLower.x, worldLower.y);
+				vs[1] = new sVector2(worldUpper.x, worldLower.y);
+				vs[2] = new sVector2(worldUpper.x, worldUpper.y);
+				vs[3] = new sVector2(worldLower.x, worldUpper.y);
 				_debugDraw.DrawPolygon(vs, 4, new Color(0.3f, 0.9f, 0.9f));
 			}
 
@@ -1419,7 +1420,7 @@ namespace Box2DX.Dynamics
 		}
 
 		//Is it safe to pass private static function pointers?
-		private static float RaycastSortKey(object data)
+		private static sfloat RaycastSortKey(object data)
 		{
 			Fixture fixture = data as Fixture;
 			Box2DXDebug.Assert(fixture != null);
@@ -1427,16 +1428,16 @@ namespace Box2DX.Dynamics
 			World world = body.GetWorld();
 
 			if (world._contactFilter != null && !world._contactFilter.RayCollide(world._raycastUserData, fixture))
-				return -1;
+				return -sfloat.One;
 
-			float lambda;
+			sfloat lambda;
 
-			SegmentCollide collide = fixture.TestSegment(out lambda, out world._raycastNormal, world._raycastSegment, 1);
+			SegmentCollide collide = fixture.TestSegment(out lambda, out world._raycastNormal, world._raycastSegment, sfloat.One);
 
 			if (world._raycastSolidShape && collide == SegmentCollide.MissCollide)
-				return -1;
+				return -sfloat.One;
 			if (!world._raycastSolidShape && collide != SegmentCollide.HitCollide)
-				return -1;
+				return -sfloat.One;
 
 			return lambda;
 		}

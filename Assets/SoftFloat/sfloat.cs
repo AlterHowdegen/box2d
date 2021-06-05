@@ -952,5 +952,6 @@ namespace SoftFloat
                 return -1;
             }
         }
+
     }
 }

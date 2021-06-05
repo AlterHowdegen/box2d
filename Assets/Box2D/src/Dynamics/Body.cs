@@ -26,6 +26,7 @@ using Box2DX.Collision;
 
 using UnityEngine;
 using Transform = Box2DX.Common.Transform;
+using SoftFloat;
 
 namespace Box2DX.Dynamics
 {
@@ -41,16 +42,16 @@ namespace Box2DX.Dynamics
 		public BodyDef(byte init)
 		{
 			MassData = new MassData();
-			MassData.Center = Vector2.zero;
-			MassData.Mass = 0.0f;
-			MassData.I = 0.0f;
+			MassData.Center = sVector2.zero;
+			MassData.Mass = (sfloat)sfloat.Zero;
+			MassData.I =(sfloat) sfloat.Zero;
 			UserData = null;
-			Position = Vector2.zero;
-			Angle = 0.0f;
-			LinearVelocity = Vector2.zero; 
-			AngularVelocity = 0.0f;
-			LinearDamping = 0.0f;
-			AngularDamping = 0.0f;
+			Position = sVector2.zero;
+			Angle = (sfloat)sfloat.Zero;
+			LinearVelocity = sVector2.zero; 
+			AngularVelocity = (sfloat)sfloat.Zero;
+			LinearDamping = (sfloat)sfloat.Zero;
+			AngularDamping = (sfloat)sfloat.Zero;
 			AllowSleep = true;
 			IsSleeping = false;
 			FixedRotation = false;
@@ -73,32 +74,32 @@ namespace Box2DX.Dynamics
 		/// The world position of the body. Avoid creating bodies at the origin
 		/// since this can lead to many overlapping shapes.
 		/// </summary>
-		public Vector2 Position;
+		public sVector2 Position;
 
 		/// <summary>
 		/// The world angle of the body in radians.
 		/// </summary>
-		public float Angle;
+		public sfloat Angle;
 
 		/// The linear velocity of the body in world co-ordinates.
-		public Vector2 LinearVelocity;
+		public sVector2 LinearVelocity;
 
 		// The angular velocity of the body.
-		public float AngularVelocity;
+		public sfloat AngularVelocity;
 
 		/// <summary>
 		/// Linear damping is use to reduce the linear velocity. The damping parameter
-		/// can be larger than 1.0f but the damping effect becomes sensitive to the
+		/// can be larger than sfloat.One but the damping effect becomes sensitive to the
 		/// time step when the damping parameter is large.
 		/// </summary>
-		public float LinearDamping;
+		public sfloat LinearDamping;
 
 		/// <summary>
 		/// Angular damping is use to reduce the angular velocity. The damping parameter
-		/// can be larger than 1.0f but the damping effect becomes sensitive to the
+		/// can be larger than sfloat.One but the damping effect becomes sensitive to the
 		/// time step when the damping parameter is large.
 		/// </summary>
-		public float AngularDamping;
+		public sfloat AngularDamping;
 
 		/// <summary>
 		/// Set this flag to false if this body should never fall asleep. Note that
@@ -158,11 +159,11 @@ namespace Box2DX.Dynamics
 
 		public Sweep _sweep;	// the swept motion for CCD
 
-		internal Vector2 _linearVelocity;
-		internal float _angularVelocity;
+		internal sVector2 _linearVelocity;
+		internal sfloat _angularVelocity;
 
-		internal Vector2 _force;
-		internal float _torque;
+		internal sVector2 _force;
+		internal sfloat _torque;
 
 		private World _world;
 		internal Body _prev;
@@ -176,15 +177,15 @@ namespace Box2DX.Dynamics
 
 		internal Controllers.ControllerEdge _controllerList;
 
-		internal float _mass;
-		internal float _invMass;
-		internal float _I;
-		internal float _invI;
+		internal sfloat _mass;
+		internal sfloat _invMass;
+		internal sfloat _I;
+		internal sfloat _invI;
 
-		internal float _linearDamping;
-		internal float _angularDamping;
+		internal sfloat _linearDamping;
+		internal sfloat _angularDamping;
 
-		internal float _sleepTime;
+		internal sfloat _sleepTime;
 
 		private object _userData;
 		
@@ -222,7 +223,7 @@ namespace Box2DX.Dynamics
 			//_xf.R = new Mat22(bd.Angle);
 
 			_sweep.LocalCenter = bd.MassData.Center;
-			_sweep.T0 = 1.0f;
+			_sweep.T0 = sfloat.One;
 			_sweep.A0 = _sweep.A = bd.Angle;
 			_sweep.C0 = _sweep.C = _xf.TransformPoint(_sweep.LocalCenter);
 
@@ -238,33 +239,33 @@ namespace Box2DX.Dynamics
 			_linearDamping = bd.LinearDamping;
 			_angularDamping = bd.AngularDamping;
 
-			//_force.Set(0.0f, 0.0f);
-			//_torque = 0.0f;
+			//_force.Set(sfloat.Zero, sfloat.Zero);
+			//_torque = sfloat.Zero;
 
 			//_linearVelocity.SetZero();
-			//_angularVelocity = 0.0f;
+			//_angularVelocity = sfloat.Zero;
 
-			//_sleepTime = 0.0f;
+			//_sleepTime = sfloat.Zero;
 
-			//_invMass = 0.0f;
-			//_I = 0.0f;
-			//_invI = 0.0f;
+			//_invMass = sfloat.Zero;
+			//_I = sfloat.Zero;
+			//_invI = sfloat.Zero;
 
 			_mass = bd.MassData.Mass;
 
-			if (_mass > 0.0f)
+			if (_mass > sfloat.Zero)
 			{
-				_invMass = 1.0f / _mass;
+				_invMass = sfloat.One / _mass;
 			}
 
 			_I = bd.MassData.I;
 
-			if (_I > 0.0f && (_flags & BodyFlags.FixedRotation) == 0)
+			if (_I > sfloat.Zero && (_flags & BodyFlags.FixedRotation) == 0)
 			{
-				_invI = 1.0f / _I;
+				_invI = sfloat.One / _I;
 			}
 
-			if (_invMass == 0.0f && _invI == 0.0f)
+			if (_invMass == sfloat.Zero && _invI == sfloat.Zero)
 			{
 				_type = BodyType.Static;
 			}
@@ -307,8 +308,8 @@ namespace Box2DX.Dynamics
 			if (inRange == false)
 			{
 				_flags |= BodyFlags.Frozen;
-				_linearVelocity = Vector2.zero;
-				_angularVelocity = 0.0f;
+				_linearVelocity = sVector2.zero;
+				_angularVelocity = sfloat.Zero;
 
 				// Failure
 				return false;
@@ -419,22 +420,22 @@ namespace Box2DX.Dynamics
 				return;
 			}
 
-			_invMass = 0.0f;
-			_I = 0.0f;
-			_invI = 0.0f;
+			_invMass = sfloat.Zero;
+			_I = sfloat.Zero;
+			_invI = sfloat.Zero;
 
 			_mass = massData.Mass;
 
-			if (_mass > 0.0f)
+			if (_mass > sfloat.Zero)
 			{
-				_invMass = 1.0f / _mass;
+				_invMass = sfloat.One / _mass;
 			}
 
 			_I = massData.I;
 
-			if (_I > 0.0f && (_flags & BodyFlags.FixedRotation) == 0)
+			if (_I > sfloat.Zero && (_flags & BodyFlags.FixedRotation) == 0)
 			{
-				_invI = 1.0f / _I;
+				_invI = sfloat.One / _I;
 			}
 
 			// Move center of mass.
@@ -442,7 +443,7 @@ namespace Box2DX.Dynamics
 			_sweep.C0 = _sweep.C = _xf.TransformPoint(_sweep.LocalCenter);
 
 			BodyType oldType = _type;
-			if (_invMass == 0.0f && _invI == 0.0f)
+			if (_invMass == sfloat.Zero && _invI == sfloat.Zero)
 			{
 				_type = BodyType.Static;
 			}
@@ -476,12 +477,12 @@ namespace Box2DX.Dynamics
 			}
 
 			// Compute mass data from shapes. Each shape has its own density.
-			_mass = 0.0f;
-			_invMass = 0.0f;
-			_I = 0.0f;
-			_invI = 0.0f;
+			_mass = sfloat.Zero;
+			_invMass = sfloat.Zero;
+			_I = sfloat.Zero;
+			_invI = sfloat.Zero;
 
-			Vector2 center = Vector2.zero;
+			sVector2 center = sVector2.zero;
 			for (Fixture f = _fixtureList; f != null; f = f.Next)
 			{
 				MassData massData;
@@ -492,23 +493,23 @@ namespace Box2DX.Dynamics
 			}
 
 			// Compute center of mass, and shift the origin to the COM.
-			if (_mass > 0.0f)
+			if (_mass > sfloat.Zero)
 			{
-				_invMass = 1.0f / _mass;
+				_invMass = sfloat.One / _mass;
 				center *= _invMass;
 			}
 
-			if (_I > 0.0f && (_flags & BodyFlags.FixedRotation) == 0)
+			if (_I > sfloat.Zero && (_flags & BodyFlags.FixedRotation) == 0)
 			{
 				// Center the inertia about the center of mass.
-				_I -= _mass * Vector2.Dot(center, center);
-				Box2DXDebug.Assert(_I > 0.0f);
-				_invI = 1.0f / _I;
+				_I -= _mass * sVector2.Dot(center, center);
+				Box2DXDebug.Assert(_I > sfloat.Zero);
+				_invI = sfloat.One / _I;
 			}
 			else
 			{
-				_I = 0.0f;
-				_invI = 0.0f;
+				_I = sfloat.Zero;
+				_invI = sfloat.Zero;
 			}
 
 			// Move center of mass.
@@ -516,7 +517,7 @@ namespace Box2DX.Dynamics
 			_sweep.C0 = _sweep.C = _xf.TransformPoint(_sweep.LocalCenter);
 
 			BodyType oldType = _type;
-			if (_invMass == 0.0f && _invI == 0.0f)
+			if (_invMass == sfloat.Zero && _invI == sfloat.Zero)
 			{
 				_type = BodyType.Static;
 			}
@@ -535,7 +536,7 @@ namespace Box2DX.Dynamics
 			}
 		}
 		
-		public bool SetTransform(Vector2 position, float angle) 
+		public bool SetTransform(sVector2 position, sfloat angle) 
 		{
 			return SetTransform(position, Box2DX.Common.Math.AngleToRotation(angle));
 		}
@@ -550,9 +551,9 @@ namespace Box2DX.Dynamics
 		/// <param name="angle">The new world rotation angle of the body in radians.</param>
 		/// <returns>Return false if the movement put a shape outside the world. In this case the
 		/// body is automatically frozen.</returns>
-		public bool SetTransform(Vector2 position, Mat22 rotation)
+		public bool SetTransform(sVector2 position, Mat22 rotation)
 #else
-		public bool SetTransform(Vector2 position, Quaternion rotation)
+		public bool SetTransform(sVector2 position, Quaternion rotation)
 #endif
 		{
 			Box2DXDebug.Assert(_world._lock == false);
@@ -592,8 +593,8 @@ namespace Box2DX.Dynamics
 			if (freeze == true)
 			{
 				_flags |= BodyFlags.Frozen;
-				_linearVelocity = Vector2.zero;
-				_angularVelocity = 0.0f;
+				_linearVelocity = sVector2.zero;
+				_angularVelocity = sfloat.Zero;
 
 				// Failure
 				return false;
@@ -631,7 +632,7 @@ namespace Box2DX.Dynamics
 		/// Set the world body origin position.
 		/// </summary>
 		/// <param name="position">The new position of the body.</param>
-		public void SetPosition(Vector2 position)
+		public void SetPosition(sVector2 position)
 		{
 #if USE_MATRIX_FOR_ROTATION
 			SetTransform(position, new Mat22(GetAngle()));
@@ -644,7 +645,7 @@ namespace Box2DX.Dynamics
 		/// Set the world body angle.
 		/// </summary>
 		/// <param name="angle">The new angle of the body in radians</param>
-		public void SetAngle(float angle)
+		public void SetAngle(sfloat angle)
 		{
 #if USE_MATRIX_FOR_ROTATION
 			SetTransform(GetPosition(), new Mat22(angle));
@@ -657,7 +658,7 @@ namespace Box2DX.Dynamics
 		/// Get the world body origin position.
 		/// </summary>
 		/// <returns>Return the world position of the body's origin.</returns>
-		public Vector2 GetPosition()
+		public sVector2 GetPosition()
 		{
 			return _xf.position;
 		}
@@ -666,7 +667,7 @@ namespace Box2DX.Dynamics
 		/// Get the angle in radians.
 		/// </summary>
 		/// <returns>Return the current world rotation angle in radians.</returns>
-		public float GetAngle()
+		public sfloat GetAngle()
 		{
 			return _sweep.A;
 		}
@@ -675,7 +676,7 @@ namespace Box2DX.Dynamics
 		/// Get the world position of the center of mass.
 		/// </summary>
 		/// <returns></returns>
-		public Vector2 GetWorldCenter()
+		public sVector2 GetWorldCenter()
 		{
 			return _sweep.C;
 		}
@@ -684,7 +685,7 @@ namespace Box2DX.Dynamics
 		/// Get the local position of the center of mass.
 		/// </summary>
 		/// <returns></returns>
-		public Vector2 GetLocalCenter()
+		public sVector2 GetLocalCenter()
 		{
 			return _sweep.LocalCenter;
 		}
@@ -693,7 +694,7 @@ namespace Box2DX.Dynamics
 		/// Set the linear velocity of the center of mass.
 		/// </summary>
 		/// <param name="v">The new linear velocity of the center of mass.</param>
-		public void SetLinearVelocity(Vector2 v)
+		public void SetLinearVelocity(sVector2 v)
 		{
 			_linearVelocity = v;
 		}
@@ -702,7 +703,7 @@ namespace Box2DX.Dynamics
 		/// Get the linear velocity of the center of mass.
 		/// </summary>
 		/// <returns>Return the linear velocity of the center of mass.</returns>
-		public Vector2 GetLinearVelocity()
+		public sVector2 GetLinearVelocity()
 		{
 			return _linearVelocity;
 		}
@@ -711,7 +712,7 @@ namespace Box2DX.Dynamics
 		/// Set the angular velocity.
 		/// </summary>
 		/// <param name="omega">The new angular velocity in radians/second.</param>
-		public void SetAngularVelocity(float w)
+		public void SetAngularVelocity(sfloat w)
 		{
 			_angularVelocity = w;
 		}
@@ -720,7 +721,7 @@ namespace Box2DX.Dynamics
 		/// Get the angular velocity.
 		/// </summary>
 		/// <returns>Return the angular velocity in radians/second.</returns>
-		public float GetAngularVelocity()
+		public sfloat GetAngularVelocity()
 		{
 			return _angularVelocity;
 		}
@@ -732,7 +733,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="force">The world force vector, usually in Newtons (N).</param>
 		/// <param name="point">The world position of the point of application.</param>
-		public void ApplyForce(Vector2 force, Vector2 point)
+		public void ApplyForce(sVector2 force, sVector2 point)
 		{
 			if (IsSleeping())
 			{
@@ -749,7 +750,7 @@ namespace Box2DX.Dynamics
 		/// This wakes up the body.
 		/// </summary>
 		/// <param name="torque">Torque about the z-axis (out of the screen), usually in N-m.</param>
-		public void ApplyTorque(float torque)
+		public void ApplyTorque(sfloat torque)
 		{
 			if (IsSleeping())
 			{
@@ -765,7 +766,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="impulse">The world impulse vector, usually in N-seconds or kg-m/s.</param>
 		/// <param name="point">The world position of the point of application.</param>
-		public void ApplyImpulse(Vector2 impulse, Vector2 point)
+		public void ApplyImpulse(sVector2 impulse, sVector2 point)
 		{
 			if (IsSleeping())
 			{
@@ -780,7 +781,7 @@ namespace Box2DX.Dynamics
 		/// Get the total mass of the body.
 		/// </summary>
 		/// <returns>Return the mass, usually in kilograms (kg).</returns>
-		public float GetMass()
+		public sfloat GetMass()
 		{
 			return _mass;
 		}
@@ -789,7 +790,7 @@ namespace Box2DX.Dynamics
 		/// Get the central rotational inertia of the body.
 		/// </summary>
 		/// <returns>Return the rotational inertia, usually in kg-m^2.</returns>
-		public float GetInertia()
+		public sfloat GetInertia()
 		{
 			return _I;
 		}
@@ -812,7 +813,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="localPoint">A point on the body measured relative the the body's origin.</param>
 		/// <returns>Return the same point expressed in world coordinates.</returns>
-		public Vector2 GetWorldPoint(Vector2 localPoint)
+		public sVector2 GetWorldPoint(sVector2 localPoint)
 		{
 			return _xf.TransformPoint(localPoint);
 		}
@@ -822,7 +823,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="localVector">A vector fixed in the body.</param>
 		/// <returns>Return the same vector expressed in world coordinates.</returns>
-		public Vector2 GetWorldVector(Vector2 localVector)
+		public sVector2 GetWorldVector(sVector2 localVector)
 		{
 			return _xf.TransformDirection(localVector);
 		}
@@ -832,7 +833,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="worldPoint">A point in world coordinates.</param>
 		/// <returns>Return the corresponding local point relative to the body's origin.</returns>
-		public Vector2 GetLocalPoint(Vector2 worldPoint)
+		public sVector2 GetLocalPoint(sVector2 worldPoint)
 		{
 			return _xf.InverseTransformPoint(worldPoint);
 		}
@@ -842,7 +843,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="worldVector">A vector in world coordinates.</param>
 		/// <returns>Return the corresponding local vector.</returns>
-		public Vector2 GetLocalVector(Vector2 worldVector)
+		public sVector2 GetLocalVector(sVector2 worldVector)
 		{
 			return _xf.InverseTransformDirection(worldVector);
 		}
@@ -852,7 +853,7 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="worldPoint">A point in world coordinates.</param>
 		/// <returns>The world velocity of a point.</returns>
-		public Vector2 GetLinearVelocityFromWorldPoint(Vector2 worldPoint)
+		public sVector2 GetLinearVelocityFromWorldPoint(sVector2 worldPoint)
 		{
 			return _linearVelocity + (worldPoint - _sweep.C).CrossScalarPreMultiply(_angularVelocity);
 		}
@@ -862,27 +863,27 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="localPoint">A point in local coordinates.</param>
 		/// <returns>The world velocity of a point.</returns>
-		public Vector2 GetLinearVelocityFromLocalPoint(Vector2 localPoint)
+		public sVector2 GetLinearVelocityFromLocalPoint(sVector2 localPoint)
 		{
 			return GetLinearVelocityFromWorldPoint(GetWorldPoint(localPoint));
 		}
 
-		public float GetLinearDamping()
+		public sfloat GetLinearDamping()
 		{
 			return _linearDamping;
 		}
 
-		public void SetLinearDamping(float linearDamping)
+		public void SetLinearDamping(sfloat linearDamping)
 		{
 			_linearDamping = linearDamping;
 		}
 
-		public float GetAngularDamping()
+		public sfloat GetAngularDamping()
 		{
 			return _angularDamping;
 		}
 
-		public void SetAngularDamping(float angularDamping)
+		public void SetAngularDamping(sfloat angularDamping)
 		{
 			_angularDamping = angularDamping;
 		}
@@ -921,16 +922,16 @@ namespace Box2DX.Dynamics
 		{
 			if (fixedr)
 			{
-				_angularVelocity = 0.0f;
-				_invI = 0.0f;
+				_angularVelocity = sfloat.Zero;
+				_invI = sfloat.Zero;
 				_flags |= BodyFlags.FixedRotation;
 			}
 			else
 			{
-				if (_I > 0.0f)
+				if (_I > sfloat.Zero)
 				{
 					// Recover _invI from _I.
-					_invI = 1.0f / _I;
+					_invI = sfloat.One / _I;
 					_flags &= BodyFlags.FixedRotation;
 				}
 				// TODO: Else what?
@@ -950,10 +951,10 @@ namespace Box2DX.Dynamics
 		{
 			if (_type == BodyType.Static)
 				return;
-			_mass = 0.0f;
-			_invMass = 0.0f;
-			_I = 0.0f;
-			_invI = 0.0f;
+			_mass = sfloat.Zero;
+			_invMass = sfloat.Zero;
+			_I = sfloat.Zero;
+			_invI = sfloat.Zero;
 			_type = BodyType.Static;
 
 			for (Fixture f = _fixtureList; f != null; f = f.Next)
@@ -1017,7 +1018,7 @@ namespace Box2DX.Dynamics
 		public void WakeUp()
 		{
 			_flags &= ~BodyFlags.Sleep;
-			_sleepTime = 0.0f;
+			_sleepTime = sfloat.Zero;
 		}
 
 		/// <summary>
@@ -1027,11 +1028,11 @@ namespace Box2DX.Dynamics
 		public void PutToSleep()
 		{
 			_flags |= BodyFlags.Sleep;
-			_sleepTime = 0.0f;
-			_linearVelocity = Vector2.zero;
-			_angularVelocity = 0.0f;
-			_force = Vector2.zero;
-			_torque = 0.0f;
+			_sleepTime = sfloat.Zero;
+			_linearVelocity = sVector2.zero;
+			_angularVelocity = sfloat.Zero;
+			_force = sVector2.zero;
+			_torque = sfloat.Zero;
 		}
 
 		/// <summary>
@@ -1094,7 +1095,7 @@ namespace Box2DX.Dynamics
 			_xf.position = _sweep.C - _xf.TransformDirection(_sweep.LocalCenter);//Common.Math.Mul(_xf.R, _sweep.LocalCenter);
 		}
 
-		internal void Advance(float t)
+		internal void Advance(sfloat t)
 		{
 			// Advance to the new safe time.
 			_sweep.Advance(t);

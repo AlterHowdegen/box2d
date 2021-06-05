@@ -84,6 +84,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 using Transform = Box2DX.Common.Transform;
@@ -103,22 +104,22 @@ namespace Box2DX.Dynamics
 		public LineJointDef()
 		{
 			Type = JointType.LineJoint;
-			localAnchor1 = Vector2.zero;
-			localAnchor2 = Vector2.zero;
-			localAxis1 = new Vector2(1.0f, 0.0f);
+			localAnchor1 = sVector2.zero;
+			localAnchor2 = sVector2.zero;
+			localAxis1 = new sVector2(sfloat.One, sfloat.Zero);
 			enableLimit = false;
-			lowerTranslation = 0.0f;
-			upperTranslation = 0.0f;
+			lowerTranslation = sfloat.Zero;
+			upperTranslation = sfloat.Zero;
 			enableMotor = false;
-			maxMotorForce = 0.0f;
-			motorSpeed = 0.0f;
+			maxMotorForce = sfloat.Zero;
+			motorSpeed = sfloat.Zero;
 		}
 
 		/// <summary>
 		/// Initialize the bodies, anchors, axis, and reference angle using the world
 		/// anchor and world axis.
 		/// </summary>
-		public void Initialize(Body body1, Body body2, Vector2 anchor, Vector2 axis)
+		public void Initialize(Body body1, Body body2, sVector2 anchor, sVector2 axis)
 		{
 			Body1 = body1;
 			Body2 = body2;
@@ -130,17 +131,17 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// The local anchor point relative to body1's origin.
 		/// </summary>
-		public Vector2 localAnchor1;
+		public sVector2 localAnchor1;
 
 		/// <summary>
 		/// The local anchor point relative to body2's origin.
 		/// </summary>
-		public Vector2 localAnchor2;
+		public sVector2 localAnchor2;
 
 		/// <summary>
 		/// The local translation axis in body1.
 		/// </summary>
-		public Vector2 localAxis1;
+		public sVector2 localAxis1;
 
 		/// <summary>
 		/// Enable/disable the joint limit.
@@ -150,12 +151,12 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// The lower translation limit, usually in meters.
 		/// </summary>
-		public float lowerTranslation;
+		public sfloat lowerTranslation;
 
 		/// <summary>
 		/// The upper translation limit, usually in meters.
 		/// </summary>
-		public float upperTranslation;
+		public sfloat upperTranslation;
 
 		/// <summary>
 		/// Enable/disable the joint motor.
@@ -165,12 +166,12 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// The maximum motor torque, usually in N-m.
 		/// </summary>
-		public float maxMotorForce;
+		public sfloat maxMotorForce;
 
 		/// <summary>
 		/// The desired motor speed in radians per second.
 		/// </summary>
-		public float motorSpeed;
+		public sfloat motorSpeed;
 	}
 
 	/// <summary>
@@ -181,25 +182,25 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public class LineJoint : Joint
 	{
-		public Vector2 _localAnchor1;
-		public Vector2 _localAnchor2;
-		public Vector2 _localXAxis1;
-		public Vector2 _localYAxis1;
+		public sVector2 _localAnchor1;
+		public sVector2 _localAnchor2;
+		public sVector2 _localXAxis1;
+		public sVector2 _localYAxis1;
 
-		public Vector2 _axis, _perp;
-		public float _s1, _s2;
-		public float _a1, _a2;
+		public sVector2 _axis, _perp;
+		public sfloat _s1, _s2;
+		public sfloat _a1, _a2;
 
 		public Mat22 _K;
-		public Vector2 _impulse;
+		public sVector2 _impulse;
 
-		public float _motorMass;			// effective mass for motor/limit translational constraint.
-		public float _motorImpulse;
+		public sfloat _motorMass;			// effective mass for motor/limit translational constraint.
+		public sfloat _motorImpulse;
 
-		public float _lowerTranslation;
-		public float _upperTranslation;
-		public float _maxMotorForce;
-		public float _motorSpeed;
+		public sfloat _lowerTranslation;
+		public sfloat _upperTranslation;
+		public sfloat _maxMotorForce;
+		public sfloat _motorSpeed;
 
 		public bool _enableLimit;
 		public bool _enableMotor;
@@ -211,11 +212,11 @@ namespace Box2DX.Dynamics
 			_localAnchor1 = def.localAnchor1;
 			_localAnchor2 = def.localAnchor2;
 			_localXAxis1 = def.localAxis1;
-			_localYAxis1 = _localXAxis1.CrossScalarPreMultiply(1.0f);
+			_localYAxis1 = _localXAxis1.CrossScalarPreMultiply(sfloat.One);
 			
-			_impulse = Vector2.zero;
-			_motorMass = 0.0f;
-			_motorImpulse = 0.0f;
+			_impulse = sVector2.zero;
+			_motorMass = sfloat.Zero;
+			_motorImpulse = sfloat.Zero;
 
 			_lowerTranslation = def.lowerTranslation;
 			_upperTranslation = def.upperTranslation;
@@ -225,68 +226,68 @@ namespace Box2DX.Dynamics
 			_enableMotor = def.enableMotor;
 			_limitState = LimitState.InactiveLimit;
 
-			_axis = Vector2.zero;
-			_perp = Vector2.zero;
+			_axis = sVector2.zero;
+			_perp = sVector2.zero;
 		}
 
-		public override Vector2 Anchor1
+		public override sVector2 Anchor1
 		{
 			get { return _body1.GetWorldPoint(_localAnchor1); }
 		}
 
-		public override Vector2 Anchor2
+		public override sVector2 Anchor2
 		{
 			get { return _body2.GetWorldPoint(_localAnchor2); }
 		}
 
-		public override Vector2 GetReactionForce(float inv_dt)
+		public override sVector2 GetReactionForce(sfloat inv_dt)
 		{
 			return inv_dt * (_impulse.x * _perp + (_motorImpulse + _impulse.y) * _axis);
 		}
 
-		public override float GetReactionTorque(float inv_dt)
+		public override sfloat GetReactionTorque(sfloat inv_dt)
 		{
-			return 0.0f;
+			return sfloat.Zero;
 		}
 
 		/// <summary>
 		/// Get the current joint translation, usually in meters.
 		/// </summary>
-		public float GetJointTranslation()
+		public sfloat GetJointTranslation()
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 p1 = b1.GetWorldPoint(_localAnchor1);
-			Vector2 p2 = b2.GetWorldPoint(_localAnchor2);
-			Vector2 d = p2 - p1;
-			Vector2 axis = b1.GetWorldVector(_localXAxis1);
+			sVector2 p1 = b1.GetWorldPoint(_localAnchor1);
+			sVector2 p2 = b2.GetWorldPoint(_localAnchor2);
+			sVector2 d = p2 - p1;
+			sVector2 axis = b1.GetWorldVector(_localXAxis1);
 
-			float translation = Vector2.Dot(d, axis);
+			sfloat translation = sVector2.Dot(d, axis);
 			return translation;
 		}
 
 		/// <summary>
 		/// Get the current joint translation speed, usually in meters per second.
 		/// </summary>
-		public float GetJointSpeed()
+		public sfloat GetJointSpeed()
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 r1 = b1.GetTransform().TransformDirection(_localAnchor1 - b1.GetLocalCenter());
-			Vector2 r2 = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
-			Vector2 p1 = b1._sweep.C + r1;
-			Vector2 p2 = b2._sweep.C + r2;
-			Vector2 d = p2 - p1;
-			Vector2 axis = b1.GetWorldVector(_localXAxis1);
+			sVector2 r1 = b1.GetTransform().TransformDirection(_localAnchor1 - b1.GetLocalCenter());
+			sVector2 r2 = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
+			sVector2 p1 = b1._sweep.C + r1;
+			sVector2 p2 = b2._sweep.C + r2;
+			sVector2 d = p2 - p1;
+			sVector2 axis = b1.GetWorldVector(_localXAxis1);
 
-			Vector2 v1 = b1._linearVelocity;
-			Vector2 v2 = b2._linearVelocity;
-			float w1 = b1._angularVelocity;
-			float w2 = b2._angularVelocity;
+			sVector2 v1 = b1._linearVelocity;
+			sVector2 v2 = b2._linearVelocity;
+			sfloat w1 = b1._angularVelocity;
+			sfloat w2 = b2._angularVelocity;
 
-			float speed = Vector2.Dot(d, axis.CrossScalarPreMultiply(w1)) + Vector2.Dot(axis, v2 + r2.CrossScalarPreMultiply(w2) - v1 - r1.CrossScalarPreMultiply(w1));
+			sfloat speed = sVector2.Dot(d, axis.CrossScalarPreMultiply(w1)) + sVector2.Dot(axis, v2 + r2.CrossScalarPreMultiply(w2) - v1 - r1.CrossScalarPreMultiply(w1));
 			return speed;
 		}
 
@@ -311,7 +312,7 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Get the lower joint limit, usually in meters.
 		/// </summary>
-		public float GetLowerLimit()
+		public sfloat GetLowerLimit()
 		{
 			return _lowerTranslation;
 		}
@@ -319,7 +320,7 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Get the upper joint limit, usually in meters.
 		/// </summary>
-		public float GetUpperLimit()
+		public sfloat GetUpperLimit()
 		{
 			return _upperTranslation;
 		}
@@ -327,7 +328,7 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Set the joint limits, usually in meters.
 		/// </summary>
-		public void SetLimits(float lower, float upper)
+		public void SetLimits(sfloat lower, sfloat upper)
 		{
 			Box2DXDebug.Assert(lower <= upper);
 			_body1.WakeUp();
@@ -357,7 +358,7 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Set the motor speed, usually in meters per second.
 		/// </summary>
-		public void SetMotorSpeed(float speed)
+		public void SetMotorSpeed(sfloat speed)
 		{
 			_body1.WakeUp();
 			_body2.WakeUp();
@@ -367,17 +368,17 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Set the maximum motor force, usually in N.
 		/// </summary>
-		public void SetMaxMotorForce(float force)
+		public void SetMaxMotorForce(sfloat force)
 		{
 			_body1.WakeUp();
 			_body2.WakeUp();
-			_maxMotorForce = Settings.FORCE_SCALE(1.0f) * force;
+			_maxMotorForce = Settings.FORCE_SCALE(sfloat.One) * force;
 		}
 
 		/// <summary>
 		/// Get the current motor force, usually in N.
 		/// </summary>
-		public float GetMotorForce()
+		public sfloat GetMotorForce()
 		{
 			return _motorImpulse;
 		}
@@ -385,7 +386,7 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Get the motor speed, usually in meters per second.
 		/// </summary>
-		public float GetMotorSpeed()
+		public sfloat GetMotorSpeed()
 		{
 			return _motorSpeed;
 		}
@@ -402,9 +403,9 @@ namespace Box2DX.Dynamics
 			Transform xf2 = b2.GetTransform();
 
 			// Compute the effective masses.
-			Vector2 r1 = xf1.TransformDirection(_localAnchor1 - _localCenter1);
-			Vector2 r2 = xf2.TransformDirection(_localAnchor2 - _localCenter2);
-			Vector2 d = b2._sweep.C + r2 - b1._sweep.C - r1;
+			sVector2 r1 = xf1.TransformDirection(_localAnchor1 - _localCenter1);
+			sVector2 r2 = xf2.TransformDirection(_localAnchor2 - _localCenter2);
+			sVector2 d = b2._sweep.C + r2 - b1._sweep.C - r1;
 
 			_invMass1 = b1._invMass;
 			_invI1 = b1._invI;
@@ -419,7 +420,7 @@ namespace Box2DX.Dynamics
 
 				_motorMass = _invMass1 + _invMass2 + _invI1 * _a1 * _a1 + _invI2 * _a2 * _a2;
 				Box2DXDebug.Assert(_motorMass > Settings.FLT_EPSILON);
-				_motorMass = 1.0f / _motorMass;
+				_motorMass = sfloat.One / _motorMass;
 			}
 
 			// Prismatic constraint.
@@ -429,22 +430,22 @@ namespace Box2DX.Dynamics
 				_s1 = (d + r1).Cross(_perp);
 				_s2 = r2.Cross(_perp);
 
-				float m1 = _invMass1, m2 = _invMass2;
-				float i1 = _invI1, i2 = _invI2;
+				sfloat m1 = _invMass1, m2 = _invMass2;
+				sfloat i1 = _invI1, i2 = _invI2;
 
-				float k11 = m1 + m2 + i1 * _s1 * _s1 + i2 * _s2 * _s2;
-				float k12 = i1 * _s1 * _a1 + i2 * _s2 * _a2;
-				float k22 = m1 + m2 + i1 * _a1 * _a1 + i2 * _a2 * _a2;
+				sfloat k11 = m1 + m2 + i1 * _s1 * _s1 + i2 * _s2 * _s2;
+				sfloat k12 = i1 * _s1 * _a1 + i2 * _s2 * _a2;
+				sfloat k22 = m1 + m2 + i1 * _a1 * _a1 + i2 * _a2 * _a2;
 
-				_K.Col1 = new Vector2(k11, k12);
-				_K.Col2 = new Vector2(k12, k22);
+				_K.Col1 = new sVector2(k11, k12);
+				_K.Col2 = new sVector2(k12, k22);
 			}
 
 			// Compute motor and limit terms.
 			if (_enableLimit)
 			{
-				float jointTranslation = Vector2.Dot(_axis, d);
-				if (Box2DX.Common.Math.Abs(_upperTranslation - _lowerTranslation) < 2.0f * Settings.LinearSlop)
+				sfloat jointTranslation = sVector2.Dot(_axis, d);
+				if (Box2DX.Common.Math.Abs(_upperTranslation - _lowerTranslation) < (sfloat)2.0f * Settings.LinearSlop)
 				{
 					_limitState = LimitState.EqualLimits;
 				}
@@ -453,7 +454,7 @@ namespace Box2DX.Dynamics
 					if (_limitState != LimitState.AtLowerLimit)
 					{
 						_limitState = LimitState.AtLowerLimit;
-						_impulse.y = 0.0f;
+						_impulse.y = sfloat.Zero;
 					}
 				}
 				else if (jointTranslation >= _upperTranslation)
@@ -461,13 +462,13 @@ namespace Box2DX.Dynamics
 					if (_limitState != LimitState.AtUpperLimit)
 					{
 						_limitState = LimitState.AtUpperLimit;
-						_impulse.y = 0.0f;
+						_impulse.y = sfloat.Zero;
 					}
 				}
 				else
 				{
 					_limitState = LimitState.InactiveLimit;
-					_impulse.y = 0.0f;
+					_impulse.y = sfloat.Zero;
 				}
 			}
 			else
@@ -477,7 +478,7 @@ namespace Box2DX.Dynamics
 
 			if (_enableMotor == false)
 			{
-				_motorImpulse = 0.0f;
+				_motorImpulse = sfloat.Zero;
 			}
 
 			if (step.WarmStarting)
@@ -486,9 +487,9 @@ namespace Box2DX.Dynamics
 				_impulse *= step.DtRatio;
 				_motorImpulse *= step.DtRatio;
 
-				Vector2 P = _impulse.x * _perp + (_motorImpulse + _impulse.y) * _axis;
-				float L1 = _impulse.x * _s1 + (_motorImpulse + _impulse.y) * _a1;
-				float L2 = _impulse.x * _s2 + (_motorImpulse + _impulse.y) * _a2;
+				sVector2 P = _impulse.x * _perp + (_motorImpulse + _impulse.y) * _axis;
+				sfloat L1 = _impulse.x * _s1 + (_motorImpulse + _impulse.y) * _a1;
+				sfloat L2 = _impulse.x * _s2 + (_motorImpulse + _impulse.y) * _a2;
 
 				b1._linearVelocity -= _invMass1 * P;
 				b1._angularVelocity -= _invI1 * L1;
@@ -498,8 +499,8 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				_impulse = Vector2.zero;
-				_motorImpulse = 0.0f;
+				_impulse = sVector2.zero;
+				_motorImpulse = sfloat.Zero;
 			}
 		}
 		
@@ -508,24 +509,24 @@ namespace Box2DX.Dynamics
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 v1 = b1._linearVelocity;
-			float w1 = b1._angularVelocity;
-			Vector2 v2 = b2._linearVelocity;
-			float w2 = b2._angularVelocity;
+			sVector2 v1 = b1._linearVelocity;
+			sfloat w1 = b1._angularVelocity;
+			sVector2 v2 = b2._linearVelocity;
+			sfloat w2 = b2._angularVelocity;
 
 			// Solve linear motor constraint.
 			if (_enableMotor && _limitState != LimitState.EqualLimits)
 			{
-				float Cdot = Vector2.Dot(_axis, v2 - v1) + _a2 * w2 - _a1 * w1;
-				float impulse = _motorMass * (_motorSpeed - Cdot);
-				float oldImpulse = _motorImpulse;
-				float maxImpulse = step.Dt * _maxMotorForce;
-				_motorImpulse = Mathf.Clamp(_motorImpulse + impulse, -maxImpulse, maxImpulse);
+				sfloat Cdot = sVector2.Dot(_axis, v2 - v1) + _a2 * w2 - _a1 * w1;
+				sfloat impulse = _motorMass * (_motorSpeed - Cdot);
+				sfloat oldImpulse = _motorImpulse;
+				sfloat maxImpulse = step.Dt * _maxMotorForce;
+				_motorImpulse = libm.Clamp(_motorImpulse + impulse, -maxImpulse, maxImpulse);
 				impulse = _motorImpulse - oldImpulse;
 
-				Vector2 P = impulse * _axis;
-				float L1 = impulse * _a1;
-				float L2 = impulse * _a2;
+				sVector2 P = impulse * _axis;
+				sfloat L1 = impulse * _a1;
+				sfloat L2 = impulse * _a2;
 
 				v1 -= _invMass1 * P;
 				w1 -= _invI1 * L1;
@@ -534,37 +535,37 @@ namespace Box2DX.Dynamics
 				w2 += _invI2 * L2;
 			}
 
-			float Cdot1 = Vector2.Dot(_perp, v2 - v1) + _s2 * w2 - _s1 * w1;
+			sfloat Cdot1 = sVector2.Dot(_perp, v2 - v1) + _s2 * w2 - _s1 * w1;
 
 			if (_enableLimit && _limitState != LimitState.InactiveLimit)
 			{
 				// Solve prismatic and limit constraint in block form.
-				float Cdot2 = Vector2.Dot(_axis, v2 - v1) + _a2 * w2 - _a1 * w1;
-				Vector2 Cdot = new Vector2(Cdot1, Cdot2);
+				sfloat Cdot2 = sVector2.Dot(_axis, v2 - v1) + _a2 * w2 - _a1 * w1;
+				sVector2 Cdot = new sVector2(Cdot1, Cdot2);
 
-				Vector2 f1 = _impulse;
-				Vector2 df =  _K.Solve(-Cdot);
+				sVector2 f1 = _impulse;
+				sVector2 df =  _K.Solve(-Cdot);
 				_impulse += df;
 
 				if (_limitState == LimitState.AtLowerLimit)
 				{
-					_impulse.y = Mathf.Max(_impulse.y, 0.0f);
+					_impulse.y = sfloat.Max(_impulse.y, sfloat.Zero);
 				}
 				else if (_limitState == LimitState.AtUpperLimit)
 				{
-					_impulse.y = Mathf.Min(_impulse.y, 0.0f);
+					_impulse.y = sfloat.Min(_impulse.y, sfloat.Zero);
 				}
 
 				// f2(1) = invK(1,1) * (-Cdot(1) - K(1,2) * (f2(2) - f1(2))) + f1(1)
-				float b = -Cdot1 - (_impulse.y - f1.y) * _K.Col2.x;
-				float f2r = b / _K.Col1.x + f1.x;
+				sfloat b = -Cdot1 - (_impulse.y - f1.y) * _K.Col2.x;
+				sfloat f2r = b / _K.Col1.x + f1.x;
 				_impulse.x = f2r;
 
 				df = _impulse - f1;
 
-				Vector2 P = df.x * _perp + df.y * _axis;
-				float L1 = df.x * _s1 + df.y * _a1;
-				float L2 = df.x * _s2 + df.y * _a2;
+				sVector2 P = df.x * _perp + df.y * _axis;
+				sfloat L1 = df.x * _s1 + df.y * _a1;
+				sfloat L2 = df.x * _s2 + df.y * _a2;
 
 				v1 -= _invMass1 * P;
 				w1 -= _invI1 * L1;
@@ -575,12 +576,12 @@ namespace Box2DX.Dynamics
 			else
 			{
 				// Limit is inactive, just solve the prismatic constraint in block form.
-				float df = (-Cdot1) / _K.Col1.x;
+				sfloat df = (-Cdot1) / _K.Col1.x;
 				_impulse.x += df;
 
-				Vector2 P = df * _perp;
-				float L1 = df * _s1;
-				float L2 = df * _s2;
+				sVector2 P = df * _perp;
+				sfloat L1 = df * _s1;
+				sfloat L2 = df * _s2;
 
 				v1 -= _invMass1 * P;
 				w1 -= _invI1 * L1;
@@ -595,27 +596,27 @@ namespace Box2DX.Dynamics
 			b2._angularVelocity = w2;
 		}
 
-		internal override bool SolvePositionConstraints(float baumgarte)
+		internal override bool SolvePositionConstraints(sfloat baumgarte)
 		{
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			Vector2 c1 = b1._sweep.C;
-			float a1 = b1._sweep.A;
+			sVector2 c1 = b1._sweep.C;
+			sfloat a1 = b1._sweep.A;
 
-			Vector2 c2 = b2._sweep.C;
-			float a2 = b2._sweep.A;
+			sVector2 c2 = b2._sweep.C;
+			sfloat a2 = b2._sweep.A;
 
 			// Solve linear limit constraint.
-			float linearError = 0.0f, angularError = 0.0f;
+			sfloat linearError = sfloat.Zero, angularError = sfloat.Zero;
 			bool active = false;
-			float C2 = 0.0f;
+			sfloat C2 = sfloat.Zero;
 
 			Mat22 R1 = new Mat22(a1), R2 = new Mat22(a2);
 
-			Vector2 r1 = R1.Multiply(_localAnchor1 - _localCenter1);
-			Vector2 r2 = R2.Multiply(_localAnchor2 - _localCenter2);
-			Vector2 d = c2 + r2 - c1 - r1;
+			sVector2 r1 = R1.Multiply(_localAnchor1 - _localCenter1);
+			sVector2 r2 = R2.Multiply(_localAnchor2 - _localCenter2);
+			sVector2 d = c2 + r2 - c1 - r1;
 
 			if (_enableLimit)
 			{
@@ -624,25 +625,25 @@ namespace Box2DX.Dynamics
 				_a1 = (d + r1).Cross(_axis);
 				_a2 = r2.Cross(_axis);
 
-				float translation = Vector2.Dot(_axis, d);
-				if (Mathf.Abs(_upperTranslation - _lowerTranslation) < 2.0f * Settings.LinearSlop)
+				sfloat translation = sVector2.Dot(_axis, d);
+				if (sfloat.Abs(_upperTranslation - _lowerTranslation) < (sfloat)2.0f * Settings.LinearSlop)
 				{
 					// Prevent large angular corrections
-					C2 = Mathf.Clamp(translation, -Settings.MaxLinearCorrection, Settings.MaxLinearCorrection);
+					C2 = libm.Clamp(translation, -Settings.MaxLinearCorrection, Settings.MaxLinearCorrection);
 					linearError = Box2DX.Common.Math.Abs(translation);
 					active = true;
 				}
 				else if (translation <= _lowerTranslation)
 				{
 					// Prevent large linear corrections and allow some slop.
-					C2 = Mathf.Clamp(translation - _lowerTranslation + Settings.LinearSlop, -Settings.MaxLinearCorrection, 0.0f);
+					C2 = libm.Clamp(translation - _lowerTranslation + Settings.LinearSlop, -Settings.MaxLinearCorrection, sfloat.Zero);
 					linearError = _lowerTranslation - translation;
 					active = true;
 				}
 				else if (translation >= _upperTranslation)
 				{
 					// Prevent large linear corrections and allow some slop.
-					C2 = Mathf.Clamp(translation - _upperTranslation - Settings.LinearSlop, 0.0f, Settings.MaxLinearCorrection);
+					C2 = libm.Clamp(translation - _upperTranslation - Settings.LinearSlop, sfloat.Zero, Settings.MaxLinearCorrection);
 					linearError = translation - _upperTranslation;
 					active = true;
 				}
@@ -653,26 +654,26 @@ namespace Box2DX.Dynamics
 			_s1 = (d + r1).Cross(_perp);
 			_s2 = r2.Cross(_perp);
 
-			Vector2 impulse;
-			float C1;
-			C1 = Vector2.Dot(_perp, d);
+			sVector2 impulse;
+			sfloat C1;
+			C1 = sVector2.Dot(_perp, d);
 
 			linearError = Box2DX.Common.Math.Max(linearError, Box2DX.Common.Math.Abs(C1));
-			angularError = 0.0f;
+			angularError = sfloat.Zero;
 
 			if (active)
 			{
-				float m1 = _invMass1, m2 = _invMass2;
-				float i1 = _invI1, i2 = _invI2;
+				sfloat m1 = _invMass1, m2 = _invMass2;
+				sfloat i1 = _invI1, i2 = _invI2;
 
-				float k11 = m1 + m2 + i1 * _s1 * _s1 + i2 * _s2 * _s2;
-				float k12 = i1 * _s1 * _a1 + i2 * _s2 * _a2;
-				float k22 = m1 + m2 + i1 * _a1 * _a1 + i2 * _a2 * _a2;
+				sfloat k11 = m1 + m2 + i1 * _s1 * _s1 + i2 * _s2 * _s2;
+				sfloat k12 = i1 * _s1 * _a1 + i2 * _s2 * _a2;
+				sfloat k22 = m1 + m2 + i1 * _a1 * _a1 + i2 * _a2 * _a2;
 
-				_K.Col1 = new Vector2(k11, k12);
-				_K.Col2 = new Vector2(k12, k22);
+				_K.Col1 = new sVector2(k11, k12);
+				_K.Col2 = new sVector2(k12, k22);
 
-				Vector2 C = new Vector2();
+				sVector2 C = new sVector2();
 				C.x = C1;
 				C.y = C2;
 
@@ -680,19 +681,19 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				float m1 = _invMass1, m2 = _invMass2;
-				float i1 = _invI1, i2 = _invI2;
+				sfloat m1 = _invMass1, m2 = _invMass2;
+				sfloat i1 = _invI1, i2 = _invI2;
 
-				float k11 = m1 + m2 + i1 * _s1 * _s1 + i2 * _s2 * _s2;
+				sfloat k11 = m1 + m2 + i1 * _s1 * _s1 + i2 * _s2 * _s2;
 
-				float impulse1 = (-C1) / k11;
+				sfloat impulse1 = (-C1) / k11;
 				impulse.x = impulse1;
-				impulse.y = 0.0f;
+				impulse.y = sfloat.Zero;
 			}
 
-			Vector2 P = impulse.x * _perp + impulse.y * _axis;
-			float L1 = impulse.x * _s1 + impulse.y * _a1;
-			float L2 = impulse.x * _s2 + impulse.y * _a2;
+			sVector2 P = impulse.x * _perp + impulse.y * _axis;
+			sfloat L1 = impulse.x * _s1 + impulse.y * _a1;
+			sfloat L2 = impulse.x * _s2 + impulse.y * _a2;
 
 			c1 -= _invMass1 * P;
 			a1 -= _invI1 * L1;

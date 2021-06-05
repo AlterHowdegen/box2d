@@ -17,7 +17,7 @@
 */
 
 using Box2DX.Common;
-
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Dynamics.Controllers
@@ -31,7 +31,7 @@ namespace Box2DX.Dynamics.Controllers
         /// Tensor to use in damping model
         Mat22 T;
         /// Set this to a positive number to clamp the maximum amount of damping done.
-        float maxTimestep;
+        sfloat maxTimestep;
     };
 
     public class TensorDampingController : Controller
@@ -51,31 +51,31 @@ namespace Box2DX.Dynamics.Controllers
         /// Set this to a positive number to clamp the maximum amount of damping done.
         /// Typically one wants maxTimestep to be 1/(max eigenvalue of T), so that damping will never cause something to reverse direction
         /// </summary>
-        float MaxTimestep;
+        sfloat MaxTimestep;
 
         /// Sets damping independantly along the x and y axes
-        public void SetAxisAligned(float xDamping, float yDamping)
+        public void SetAxisAligned(sfloat xDamping, sfloat yDamping)
         {
             T.Col1.x = -xDamping;
-            T.Col1.y = 0;
-            T.Col2.x = 0;
+            T.Col1.y = sfloat.Zero;
+            T.Col2.x = sfloat.Zero;
             T.Col2.y = -yDamping;
-            if (xDamping > 0 || yDamping > 0)
+            if (xDamping > sfloat.Zero || yDamping > sfloat.Zero)
             {
-                MaxTimestep = 1 / Math.Max(xDamping, yDamping);
+                MaxTimestep = sfloat.One / Math.Max(xDamping, yDamping);
             }
             else
             {
-                MaxTimestep = 0;
+                MaxTimestep = sfloat.Zero;
             }
         }
 
         public override void Step(TimeStep step)
         {
-            float timestep = step.Dt;
+            sfloat timestep = step.Dt;
             if (timestep <= Settings.FLT_EPSILON)
                 return;
-            if (timestep > MaxTimestep && MaxTimestep > 0)
+            if (timestep > MaxTimestep && MaxTimestep > sfloat.Zero)
                 timestep = MaxTimestep;
             for (ControllerEdge i = _bodyList; i != null; i = i.nextBody)
             {
@@ -83,7 +83,7 @@ namespace Box2DX.Dynamics.Controllers
                 if (body.IsSleeping())
                     continue;
 
-                Vector2 damping = body.GetWorldVector(T.Multiply(body.GetLocalVector(body.GetLinearVelocity())));
+                sVector2 damping = body.GetWorldVector(T.Multiply(body.GetLocalVector(body.GetLinearVelocity())));
                 body.SetLinearVelocity(body.GetLinearVelocity() + timestep*damping);
             }
         }

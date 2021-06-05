@@ -22,7 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Common
@@ -34,7 +34,7 @@ namespace Box2DX.Common
 	[System.Serializable]
 	public struct Transform
 	{
-		public Vector2 		position;
+		public sVector2 		position;
 #if USE_MATRIX_FOR_ROTATION
 		public Mat22 		rotation;
 #else	
@@ -47,7 +47,7 @@ namespace Box2DX.Common
 		/// </summary>
 		/// <param name="position"></param>
 		/// <param name="R"></param>
-		public Transform(Vector2 position, Mat22 rotation)
+		public Transform(sVector2 position, Mat22 rotation)
 		{
 			this.position = position;
 			this.rotation = rotation;
@@ -58,14 +58,14 @@ namespace Box2DX.Common
 		/// </summary>
 		/// <param name="position"></param>
 		/// <param name="R"></param>
-		public Transform(Vector2 position, Quaternion rotation)
+		public Transform(sVector2 position, Quaternion rotation)
 		{
 			this.position = position;
 			this.rotation = rotation;
 		}
 #endif 
 		
-		public Vector2 InverseTransformPoint(Vector2 vector) 
+		public sVector2 InverseTransformPoint(sVector2 vector) 
 		{	
 #if USE_MATRIX_FOR_ROTATION
 			return Math.MulT(rotation, vector - position);
@@ -74,7 +74,7 @@ namespace Box2DX.Common
 #endif
 		}
 		
-		public Vector2 InverseTransformDirection(Vector2 vector)
+		public sVector2 InverseTransformDirection(sVector2 vector)
 		{
 #if USE_MATRIX_FOR_ROTATION
 			return Math.MulT(rotation, vector);
@@ -83,12 +83,12 @@ namespace Box2DX.Common
 #endif
 		}
 		
-		public Vector2 TransformPoint(Vector2 vector)
+		public sVector2 TransformPoint(sVector2 vector)
 		{	
 #if USE_MATRIX_FOR_ROTATION
 			return position + Math.Mul(rotation, vector);
 #else
-			return position + (rotation * vector.ToVector3()).ToVector2();
+			return position + (rotation * vector.ToVector3()).TosVector2();
 #endif
 			
 		}
@@ -96,19 +96,19 @@ namespace Box2DX.Common
 		// <summary>
 		// Transforms direction from local space to world space.
 		// </summary>
-		public Vector2 TransformDirection(Vector2 vector) 
+		public sVector2 TransformDirection(sVector2 vector) 
 		{ 
 #if USE_MATRIX_FOR_ROTATION
 			return Math.Mul(rotation, vector);
 #else
-			return (rotation * vector.ToVector3()).ToVector2();
+			return (rotation * vector.ToVector3()).TosVector2();
 #endif
 		}
 		
 #if USE_MATRIX_FOR_ROTATION
-		public static readonly Transform identify = new Transform(Vector2.zero, Mat22.Identity);
+		public static readonly Transform identify = new Transform(sVector2.zero, Mat22.Identity);
 #else 
-		public static readonly Transform identity = new Transform(Vector2.zero, Quaternion.identity);
+		public static readonly Transform identity = new Transform(sVector2.zero, Quaternion.identity);
 #endif 
 	}
 }

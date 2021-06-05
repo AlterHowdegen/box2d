@@ -145,19 +145,20 @@ using Box2DX.Common;
 using Box2DX.Collision;
 
 using UnityEngine;
+using SoftFloat;
 
 namespace Box2DX.Dynamics
 {
 	public struct Position
 	{
-		public Vector2 x;
-		public float a;
+		public sVector2 x;
+		public sfloat a;
 	}
 
 	public struct Velocity
 	{
-		public Vector2 v;
-		public float w;
+		public sVector2 v;
+		public sfloat w;
 	}
 
 	public class Island : IDisposable
@@ -217,7 +218,7 @@ namespace Box2DX.Dynamics
 			_jointCount = 0;
 		}
 
-		public void Solve(TimeStep step, Vector2 gravity, bool allowSleep)
+		public void Solve(TimeStep step, sVector2 gravity, bool allowSleep)
 		{
 			// Integrate velocities and apply damping.
 			for (int i = 0; i < _bodyCount; ++i)
@@ -232,8 +233,8 @@ namespace Box2DX.Dynamics
 				b._angularVelocity += step.Dt * b._invI * b._torque;
 
 				// Reset forces.
-				b._force = Vector2.zero;
-				b._torque = 0.0f;
+				b._force = sVector2.zero;
+				b._torque = sfloat.Zero;
 
 				// Apply damping.
 				// ODE: dv/dt + c * v = 0
@@ -241,9 +242,9 @@ namespace Box2DX.Dynamics
 				// Time step: v(t + dt) = v0 * exp(-c * (t + dt)) = v0 * exp(-c * t) * exp(-c * dt) = v * exp(-c * dt)
 				// v2 = exp(-c * dt) * v1
 				// Taylor expansion:
-				// v2 = (1.0f - c * dt) * v1
-				b._linearVelocity *= Mathf.Clamp(1.0f - step.Dt * b._linearDamping, 0.0f, 1.0f);
-				b._angularVelocity *= Mathf.Clamp(1.0f - step.Dt * b._angularDamping, 0.0f, 1.0f);
+				// v2 = (sfloat.One - c * dt) * v1
+				b._linearVelocity *= libm.Clamp(sfloat.One - step.Dt * b._linearDamping, sfloat.Zero, sfloat.One);
+				b._angularVelocity *= libm.Clamp(sfloat.One - step.Dt * b._angularDamping, sfloat.Zero, sfloat.One);
 			}
 
 			ContactSolver contactSolver = new ContactSolver(step, _contacts, _contactCount);
@@ -278,16 +279,16 @@ namespace Box2DX.Dynamics
 					continue;
 
 				// Check for large velocities.
-				Vector2 translation = step.Dt * b._linearVelocity;
-				if (Vector2.Dot(translation, translation) > Settings.MaxTranslationSquared)
+				sVector2 translation = step.Dt * b._linearVelocity;
+				if (sVector2.Dot(translation, translation) > Settings.MaxTranslationSquared)
 				{
 					b._linearVelocity = (Settings.MaxTranslation * step.Inv_Dt) * translation.normalized;
 				}
 
-				float rotation = step.Dt * b._angularVelocity;
+				sfloat rotation = step.Dt * b._angularVelocity;
 				if (rotation * rotation > Settings.MaxRotationSquared)
 				{
-					if (rotation < 0.0)
+					if (rotation < sfloat.Zero)
 					{
 						b._angularVelocity = -step.Inv_Dt * Settings.MaxRotation;
 					}
@@ -334,39 +335,39 @@ namespace Box2DX.Dynamics
 
 			if (allowSleep)
 			{
-				float minSleepTime = Settings.FLT_MAX;
+				sfloat minSleepTime = Settings.FLT_MAX;
 
-#if !TARGET_FLOAT32_IS_FIXED
-				float linTolSqr = Settings.LinearSleepTolerance * Settings.LinearSleepTolerance;
-				float angTolSqr = Settings.AngularSleepTolerance * Settings.AngularSleepTolerance;
+#if !TARGET_sfloat32_IS_FIXED
+				sfloat linTolSqr = Settings.LinearSleepTolerance * Settings.LinearSleepTolerance;
+				sfloat angTolSqr = Settings.AngularSleepTolerance * Settings.AngularSleepTolerance;
 #endif
 
 				for (int i = 0; i < _bodyCount; ++i)
 				{
 					Body b = _bodies[i];
-					if (b._invMass == 0.0f)
+					if (b._invMass == sfloat.Zero)
 					{
 						continue;
 					}
 
 					if ((b._flags & Body.BodyFlags.AllowSleep) == 0)
 					{
-						b._sleepTime = 0.0f;
-						minSleepTime = 0.0f;
+						b._sleepTime = sfloat.Zero;
+						minSleepTime = sfloat.Zero;
 					}
 
 					if ((b._flags & Body.BodyFlags.AllowSleep) == 0 ||
-#if TARGET_FLOAT32_IS_FIXED
+#if TARGET_sfloat32_IS_FIXED
 						Common.Math.Abs(b._angularVelocity) > Settings.AngularSleepTolerance ||
 						Common.Math.Abs(b._linearVelocity.X) > Settings.LinearSleepTolerance ||
 						Common.Math.Abs(b._linearVelocity.Y) > Settings.LinearSleepTolerance)
 #else
  b._angularVelocity * b._angularVelocity > angTolSqr ||
-						Vector2.Dot(b._linearVelocity, b._linearVelocity) > linTolSqr)
+						sVector2.Dot(b._linearVelocity, b._linearVelocity) > linTolSqr)
 #endif
 					{
-						b._sleepTime = 0.0f;
-						minSleepTime = 0.0f;
+						b._sleepTime = sfloat.Zero;
+						minSleepTime = sfloat.Zero;
 					}
 					else
 					{
@@ -381,8 +382,8 @@ namespace Box2DX.Dynamics
 					{
 						Body b = _bodies[i];
 						b._flags |= Body.BodyFlags.Sleep;
-						b._linearVelocity = Vector2.zero;
-						b._angularVelocity = 0.0f;
+						b._linearVelocity = sVector2.zero;
+						b._angularVelocity = sfloat.Zero;
 					}
 				}
 			}
@@ -424,16 +425,16 @@ namespace Box2DX.Dynamics
 					continue;
 
 				// Check for large velocities.
-				Vector2 translation = subStep.Dt * b._linearVelocity;
-				if (Vector2.Dot(translation, translation) > Settings.MaxTranslationSquared)
+				sVector2 translation = subStep.Dt * b._linearVelocity;
+				if (sVector2.Dot(translation, translation) > Settings.MaxTranslationSquared)
 				{
 					b._linearVelocity = (Settings.MaxTranslation * subStep.Inv_Dt) * translation.normalized;
 				}
 
-				float rotation = subStep.Dt * b._angularVelocity;
+				sfloat rotation = subStep.Dt * b._angularVelocity;
 				if (rotation * rotation > Settings.MaxRotationSquared)
 				{
-					if (rotation < 0.0)
+					if (rotation < sfloat.Zero)
 					{
 						b._angularVelocity = -subStep.Inv_Dt * Settings.MaxRotation;
 					}
@@ -458,7 +459,7 @@ namespace Box2DX.Dynamics
 			}
 
 			// Solve position constraints.
-			const float k_toiBaumgarte = 0.75f;
+			sfloat k_toiBaumgarte = (sfloat)0.75f;
 			for (int i = 0; i < subStep.PositionIterations; ++i)
 			{
 				bool contactsOkay = contactSolver.SolvePositionConstraints(k_toiBaumgarte);

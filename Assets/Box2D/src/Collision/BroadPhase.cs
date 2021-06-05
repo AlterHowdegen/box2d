@@ -38,18 +38,19 @@ Bullet (http:/www.bulletphysics.com).
 // - no broadphase is perfect and neither is this one: it is not great for huge
 //   worlds (use a multi-SAP instead), it is not great for large objects.
 
-//#define TARGET_FLOAT32_IS_FIXED
+//#define TARGET_sfloat32_IS_FIXED
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Collision
 {
-	public delegate float SortKeyFunc(object shape);
+	public delegate sfloat SortKeyFunc(object shape);
 
 #warning "CAS"
 	public class BoundValues
@@ -95,7 +96,7 @@ namespace Box2DX.Collision
 
 	public class BroadPhase
 	{
-#if TARGET_FLOAT32_IS_FIXED
+#if TARGET_sfloat32_IS_FIXED
 		public static readonly ushort BROADPHASE_MAX = (Common.Math.USHRT_MAX/2);
 #else
 		public static readonly ushort BROADPHASE_MAX = Common.Math.USHRT_MAX;
@@ -112,11 +113,11 @@ namespace Box2DX.Collision
 		public Bound[][] _bounds = new Bound[2][/*(2 * Settings.MaxProxies)*/];
 
 		public ushort[] _queryResults = new ushort[Settings.MaxProxies];
-		public float[] _querySortKeys = new float[Settings.MaxProxies];
+		public sfloat[] _querySortKeys = new sfloat[Settings.MaxProxies];
 		public int _queryResultCount;
 
 		public AABB _worldAABB;
-		public Vector2 _quantizationFactor;
+		public sVector2 _quantizationFactor;
 		public int _proxyCount;
 		public ushort _timeStamp;
 
@@ -131,9 +132,9 @@ namespace Box2DX.Collision
 			_worldAABB = worldAABB;
 			_proxyCount = 0;
 
-			Vector2 d = worldAABB.UpperBound - worldAABB.LowerBound;
-			_quantizationFactor.x = (float)BROADPHASE_MAX / d.x;
-			_quantizationFactor.y = (float)BROADPHASE_MAX / d.y;
+			sVector2 d = worldAABB.UpperBound - worldAABB.LowerBound;
+			_quantizationFactor.x = (sfloat)BROADPHASE_MAX / d.x;
+			_quantizationFactor.y = (sfloat)BROADPHASE_MAX / d.y;
 
 			for (ushort i = 0; i < Settings.MaxProxies - 1; ++i)
 			{
@@ -169,8 +170,8 @@ namespace Box2DX.Collision
 		// is the number of proxies that are out of range.
 		public bool InRange(AABB aabb)
 		{
-			Vector2 d = Vector2.Max(aabb.LowerBound - _worldAABB.UpperBound, _worldAABB.LowerBound - aabb.UpperBound);
-			return Mathf.Max(d.x, d.y) < 0.0f;
+			sVector2 d = sVector2.Max(aabb.LowerBound - _worldAABB.UpperBound, _worldAABB.LowerBound - aabb.UpperBound);
+			return sfloat.Max(d.x, d.y) < sfloat.Zero;
 		}
 
 		// Create and destroy proxies. These call Flush first.
@@ -643,18 +644,18 @@ namespace Box2DX.Collision
 #endif 
 		int QuerySegment(Segment segment, object[] userData, int maxCount, SortKeyFunc sortKey)
 		{
-			float maxLambda = 1;
+			sfloat maxLambda = sfloat.One;
 
-			float dx = (segment.P2.x - segment.P1.x) * _quantizationFactor.x;
-			float dy = (segment.P2.y - segment.P1.y) * _quantizationFactor.y;
+			sfloat dx = (segment.P2.x - segment.P1.x) * _quantizationFactor.x;
+			sfloat dy = (segment.P2.y - segment.P1.y) * _quantizationFactor.y;
 
 			int sx = dx < -Settings.FLT_EPSILON ? -1 : (dx > Settings.FLT_EPSILON ? 1 : 0);
 			int sy = dy < -Settings.FLT_EPSILON ? -1 : (dy > Settings.FLT_EPSILON ? 1 : 0);
 
 			Box2DXDebug.Assert(sx != 0 || sy != 0);
 
-			float p1x = (segment.P1.x - _worldAABB.LowerBound.x) * _quantizationFactor.x;
-			float p1y = (segment.P1.y - _worldAABB.LowerBound.y) * _quantizationFactor.y;
+			sfloat p1x = (segment.P1.x - _worldAABB.LowerBound.x) * _quantizationFactor.x;
+			sfloat p1y = (segment.P1.y - _worldAABB.LowerBound.y) * _quantizationFactor.y;
 #if ALLOWUNSAFE
 			ushort* startValues = stackalloc ushort[2];
 			ushort* startValues2 = stackalloc ushort[2];
@@ -669,7 +670,7 @@ namespace Box2DX.Collision
 			ushort proxyId;
 			Proxy proxy;
 
-			// TODO_ERIN implement fast float to ushort conversion.
+			// TODO_ERIN implement fast sfloat to ushort conversion.
 			startValues[0] = (ushort)((ushort)(p1x) & (BROADPHASE_MAX - 1));
 			startValues2[0] = (ushort)((ushort)(p1x) | 1);
 
@@ -699,9 +700,9 @@ namespace Box2DX.Collision
 				int i = 0;
 				while (i < _queryResultCount - 1)
 				{
-					float a = _querySortKeys[i];
-					float b = _querySortKeys[i + 1];
-					if ((a < 0) ? (b >= 0) : (a > b && b >= 0))
+					sfloat a = _querySortKeys[i];
+					sfloat b = _querySortKeys[i + 1];
+					if ((a < sfloat.Zero) ? (b >= sfloat.Zero) : (a > b && b >= sfloat.Zero))
 					{
 						_querySortKeys[i + 1] = a;
 						_querySortKeys[i] = b;
@@ -717,15 +718,15 @@ namespace Box2DX.Collision
 					}
 				}
 				//Skim off negative values
-				while (_queryResultCount > 0 && _querySortKeys[_queryResultCount - 1] < 0)
+				while (_queryResultCount > 0 && _querySortKeys[_queryResultCount - 1] < sfloat.Zero)
 					_queryResultCount--;
 			}
 
 			//Now work through the rest of the segment
 			for (; ; )
 			{
-				float xProgress = 0;
-				float yProgress = 0;
+				sfloat xProgress = sfloat.Zero;
+				sfloat yProgress = sfloat.Zero;
 				if (xIndex < 0 || xIndex >= _proxyCount * 2)
 					break;
 				if (yIndex < 0 || yIndex >= _proxyCount * 2)
@@ -745,7 +746,7 @@ namespace Box2DX.Collision
 						if (xIndex < 0)
 							break;
 					}
-					xProgress = (_bounds[0][xIndex].Value - p1x) / dx;
+					xProgress = ((sfloat)_bounds[0][xIndex].Value - p1x) / dx;
 				}
 				if (sy != 0)
 				{
@@ -762,7 +763,7 @@ namespace Box2DX.Collision
 						if (yIndex < 0)
 							break;
 					}
-					yProgress = (_bounds[1][yIndex].Value - p1y) / dy;
+					yProgress = ((sfloat)_bounds[1][yIndex].Value - p1y) / dy;
 				}
 				for (; ; )
 				{
@@ -828,7 +829,7 @@ namespace Box2DX.Collision
 							if (xIndex < 0)
 								break;
 						}
-						xProgress = (_bounds[0][xIndex].Value - p1x) / dx;
+						xProgress = ((sfloat)_bounds[0][xIndex].Value - p1x) / dx;
 					}
 					else
 					{
@@ -892,7 +893,7 @@ namespace Box2DX.Collision
 							if (yIndex < 0)
 								break;
 						}
-						yProgress = (_bounds[1][yIndex].Value - p1y) / dy;
+						yProgress = ((sfloat)_bounds[1][yIndex].Value - p1y) / dy;
 					}
 				}
 
@@ -955,12 +956,12 @@ namespace Box2DX.Collision
 			Box2DXDebug.Assert(aabb.UpperBound.x >= aabb.LowerBound.x);
 			Box2DXDebug.Assert(aabb.UpperBound.y >= aabb.LowerBound.y);
 
-			Vector2 minVertex = Common.Math.Clamp(aabb.LowerBound, _worldAABB.LowerBound, _worldAABB.UpperBound);
-			Vector2 maxVertex = Common.Math.Clamp(aabb.UpperBound, _worldAABB.LowerBound, _worldAABB.UpperBound);
+			sVector2 minVertex = Common.Math.Clamp(aabb.LowerBound, _worldAABB.LowerBound, _worldAABB.UpperBound);
+			sVector2 maxVertex = Common.Math.Clamp(aabb.UpperBound, _worldAABB.LowerBound, _worldAABB.UpperBound);
 
 			// Bump lower bounds downs and upper bounds up. This ensures correct sorting of
 			// lower/upper bounds that would have equal values.
-			// TODO_ERIN implement fast float to uint16 conversion.
+			// TODO_ERIN implement fast sfloat to uint16 conversion.
 			lowerValues[0] = (ushort)((ushort)(_quantizationFactor.x * (minVertex.x - _worldAABB.LowerBound.x)) & (BROADPHASE_MAX - 1));
 			upperValues[0] = (ushort)((ushort)(_quantizationFactor.x * (maxVertex.x - _worldAABB.LowerBound.x)) | 1);
 
@@ -1094,15 +1095,15 @@ namespace Box2DX.Collision
 #if ALLOWUNSAFE
 		public unsafe void AddProxyResult(ushort proxyId, Proxy proxy, int maxCount, SortKeyFunc sortKey)
 		{
-			float key = sortKey(proxy.UserData);
+			sfloat key = sortKey(proxy.UserData);
 			//Filter proxies on positive keys
 			if (key < 0)
 				return;
 			//Merge the new key into the sorted list.
-			//float32* p = std::lower_bound(m_querySortKeys,m_querySortKeys+m_queryResultCount,key);
-			fixed (float* querySortKeysPtr = _querySortKeys)
+			//sfloat32* p = std::lower_bound(m_querySortKeys,m_querySortKeys+m_queryResultCount,key);
+			fixed (sfloat* querySortKeysPtr = _querySortKeys)
 			{
-				float* p = querySortKeysPtr;
+				sfloat* p = querySortKeysPtr;
 				while (*p < key && p < &querySortKeysPtr[_queryResultCount])
 					p++;
 				int i = (int)(p - &querySortKeysPtr[0]);
@@ -1124,16 +1125,16 @@ namespace Box2DX.Collision
 #else
 		public void AddProxyResult(ushort proxyId, Proxy proxy, int maxCount, SortKeyFunc sortKey)
 		{
-			float key = sortKey(proxy.UserData);
+			sfloat key = sortKey(proxy.UserData);
 			//Filter proxies on positive keys
-			if (key < 0)
+			if (key < sfloat.Zero)
 				return;
 			//Merge the new key into the sorted list.
-			//float32* p = std::lower_bound(m_querySortKeys,m_querySortKeys+m_queryResultCount,key);
-			float[] querySortKeysPtr = _querySortKeys;
+			//sfloat32* p = std::lower_bound(m_querySortKeys,m_querySortKeys+m_queryResultCount,key);
+			sfloat[] querySortKeysPtr = _querySortKeys;
 
 			int ip = 0;
-			float p = querySortKeysPtr[ip];
+			sfloat p = querySortKeysPtr[ip];
 			while (p < key && ip < _queryResultCount)
 			{
 				p = querySortKeysPtr[ip];

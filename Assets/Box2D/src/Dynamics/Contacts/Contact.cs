@@ -22,7 +22,7 @@
 using System;
 using Box2DX.Collision;
 using Box2DX.Common;
-
+using SoftFloat;
 using UnityEngine;
 
 using Transform = Box2DX.Common.Transform;
@@ -102,7 +102,7 @@ namespace Box2DX.Dynamics
 		
 		public Manifold _manifold = new Manifold();
 
-		public float _toi;
+		public sfloat _toi;
 
 		internal delegate void CollideShapeDelegate(
 			ref Manifold manifold, Shape circle1, Transform xf1, Shape circle2, Transform xf2);
@@ -247,8 +247,8 @@ namespace Box2DX.Dynamics
 			for (int i = 0; i < _manifold.PointCount; ++i)
 			{
 				ManifoldPoint mp2 = _manifold.Points[i];
-				mp2.NormalImpulse = 0.0f;
-				mp2.TangentImpulse = 0.0f;
+				mp2.NormalImpulse = sfloat.Zero;
+				mp2.TangentImpulse = sfloat.Zero;
 				ContactID id2 = mp2.ID;
 
 				for (int j = 0; j < oldManifold.PointCount; ++j)
@@ -301,7 +301,7 @@ namespace Box2DX.Dynamics
 			CollideShapeFunction(ref _manifold, _fixtureA.Shape, bodyA.GetTransform(), _fixtureB.Shape, bodyB.GetTransform());
 		}
 
-		public float ComputeTOI(Sweep sweepA, Sweep sweepB)
+		public sfloat ComputeTOI(Sweep sweepA, Sweep sweepB)
 		{
 			TOIInput input = new TOIInput();
 			input.SweepA = sweepA;

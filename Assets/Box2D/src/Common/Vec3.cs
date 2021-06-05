@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using SoftFloat;
 
 namespace Box2DX.Common
 {
@@ -35,22 +36,22 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Construct using coordinates.
 		/// </summary>
-		public Vec3(float x, float y, float z) { X = x; Y = y; Z = z; }
+		public Vec3(sfloat x, sfloat y, sfloat z) { X = x; Y = y; Z = z; }
 
 		/// <summary>
 		/// Set this vector to all zeros.
 		/// </summary>
-		public void SetZero() { X = 0.0f; Y = 0.0f; Z = 0.0f; }
+		public void SetZero() { X = sfloat.Zero; Y = sfloat.Zero; Z = sfloat.Zero; }
 
 		/// <summary>
 		/// Set this vector to some specified coordinates.
 		/// </summary>
-		public void Set(float x, float y, float z) { X = x; Y = y; Z = z; }
+		public void Set(sfloat x, sfloat y, sfloat z) { X = x; Y = y; Z = z; }
 
 		/// <summary>
 		/// Perform the dot product on two vectors.
 		/// </summary>
-		public static float Dot(Vec3 a, Vec3 b)
+		public static sfloat Dot(Vec3 a, Vec3 b)
 		{
 			return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
 		}
@@ -90,7 +91,7 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Multiply this vector by a scalar.
 		/// </summary>
-		public static Vec3 operator *(Vec3 v, float s)
+		public static Vec3 operator *(Vec3 v, sfloat s)
 		{
 			return new Vec3(v.X * s, v.Y * s, v.Z * s);
 		}
@@ -98,11 +99,11 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Multiply this vector by a scalar.
 		/// </summary>
-		public static Vec3 operator *(float s, Vec3 v)
+		public static Vec3 operator *(sfloat s, Vec3 v)
 		{
 			return new Vec3(v.X * s, v.Y * s, v.Z * s);
 		}
 
-		public float X, Y, Z;
+		public sfloat X, Y, Z;
 	}
 }

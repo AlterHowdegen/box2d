@@ -22,7 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Common
@@ -33,7 +33,7 @@ namespace Box2DX.Common
 	/// </summary>
 	public struct XForm
 	{
-		public Vector2 	position;
+		public sVector2 	position;
 		public Mat22 	R;
 
 		/// <summary>
@@ -41,7 +41,7 @@ namespace Box2DX.Common
 		/// </summary>
 		/// <param name="position"></param>
 		/// <param name="R"></param>
-		public XForm(Vector2 p, Mat22 rotation)
+		public XForm(sVector2 p, Mat22 rotation)
 		{
 			position = p;
 			R = rotation;
@@ -52,43 +52,43 @@ namespace Box2DX.Common
 		/// </summary>
 		public void SetIdentity()
 		{
-			position = Vector2.zero;
+			position = sVector2.zero;
 			R = Mat22.Identity;
 		}
 
 		/// Set this based on the position and angle.
-		public void Set(Vector2 p, float angle)
+		public void Set(sVector2 p, sfloat angle)
 		{
 			position = p;
 			R = new Mat22(angle);
 		}
 
 		/// Calculate the angle that the rotation matrix represents.
-		public float GetAngle()
+		public sfloat GetAngle()
 		{
-			return Mathf.Atan2(R.Col1.y, R.Col1.x);
+			return libm.atan2f(R.Col1.y, R.Col1.x);
 		}
 		
-		public Vector2 TransformDirection(Vector2 vector) 
+		public sVector2 TransformDirection(sVector2 vector) 
 		{
 			return Math.Mul(R, vector);
 		}
 		
-		public Vector2 InverseTransformDirection(Vector2 vector)
+		public sVector2 InverseTransformDirection(sVector2 vector)
 		{
 			return Math.MulT(R, vector);
 		}
 		
-		public Vector2 TransformPoint(Vector2 vector)
+		public sVector2 TransformPoint(sVector2 vector)
 		{	
 			return position + Math.Mul(R, vector);
 		}
 		
-		public Vector2 InverseTransformPoint(Vector2 vector)
+		public sVector2 InverseTransformPoint(sVector2 vector)
 		{
 			return Math.MulT(R, vector - position);
 		}
 
-		public static XForm Identity { get { return new XForm(Vector2.zero, Mat22.Identity); } }
+		public static XForm Identity { get { return new XForm(sVector2.zero, Mat22.Identity); } }
 	}
 }

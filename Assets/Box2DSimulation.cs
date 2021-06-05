@@ -4,19 +4,21 @@ using UnityEngine;
 using Box2DX;
 using Box2DX.Dynamics;
 using Box2DX.Collision;
+using SoftFloat;
 
 public class Box2DSimulation : MonoBehaviour
 {
     public static Box2DSimulation instance;
     public bool useCustomBox2D;
     public World world;
-    public Vector2 gravity;
+    public sVector2 gravity = new sVector2(0f, -10f);
     public bool doSleep;
-    public Vector2 center;
-    public Vector2 lowerBound;
-    public Vector2 upperBound;
+    public sVector2 center = sVector2.zero;
+    public sVector2 lowerBound = new sVector2(-40f, -40f);
+    public sVector2 upperBound = new sVector2(40f, 40f);
     private int velocityIteration = 6;
     private int positionIteration = 2;
+    public sfloat timestep = (sfloat)0.02f;
 
     public ContactListener contactListener;
 
@@ -31,7 +33,7 @@ public class Box2DSimulation : MonoBehaviour
         aabb.LowerBound = lowerBound;
         aabb.UpperBound = upperBound;
         world = new World(aabb, gravity, doSleep);
-        // world.GetGroundBody().SetPosition(Vector2.zero);
+        // world.GetGroundBody().SetPosition(sVector2.zero);
 
         contactListener = world._contactListener;
     }
@@ -44,12 +46,12 @@ public class Box2DSimulation : MonoBehaviour
         if(!useCustomBox2D){
             return;
         }
-        // Debug.Log("Stepping");
+        Debug.Log("Stepping");
         // Debug.Log(Time.fixedDeltaTime);
         // Debug.Log(world._broadPhase._worldAABB.Center);
         // Debug.Log(world._broadPhase._worldAABB.Extents);
         // Debug.Log(world.GetBodyCount());
-        world.Step(Time.fixedDeltaTime, velocityIteration, positionIteration);
+        world.Step(timestep, velocityIteration, positionIteration);
 
         // Debug.Log(world.GetContactCount());
 

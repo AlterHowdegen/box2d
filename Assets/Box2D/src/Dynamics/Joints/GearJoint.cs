@@ -44,6 +44,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Dynamics
@@ -60,7 +61,7 @@ namespace Box2DX.Dynamics
 			Type = JointType.GearJoint;
 			Joint1 = null;
 			Joint2 = null;
-			Ratio = 1.0f;
+			Ratio = sfloat.One;
 		}
 
 		/// <summary>
@@ -77,7 +78,7 @@ namespace Box2DX.Dynamics
 		/// The gear ratio.
 		/// @see GearJoint for explanation.
 		/// </summary>
-		public float Ratio;
+		public sfloat Ratio;
 	}
 
 	/// <summary>
@@ -104,46 +105,46 @@ namespace Box2DX.Dynamics
 		public RevoluteJoint _revolute2;
 		public PrismaticJoint _prismatic2;
 
-		public Vector2 _groundAnchor1;
-		public Vector2 _groundAnchor2;
+		public sVector2 _groundAnchor1;
+		public sVector2 _groundAnchor2;
 
-		public Vector2 _localAnchor1;
-		public Vector2 _localAnchor2;
+		public sVector2 _localAnchor1;
+		public sVector2 _localAnchor2;
 
 		public Jacobian _J;
 
-		public float _constant;
-		public float _ratio;
+		public sfloat _constant;
+		public sfloat _ratio;
 
 		// Effective mass
-		public float _mass;
+		public sfloat _mass;
 
 		// Impulse for accumulation/warm starting.
-		public float _impulse;
+		public sfloat _impulse;
 
-		public override Vector2 Anchor1 { get { return _body1.GetWorldPoint(_localAnchor1); } }
-		public override Vector2 Anchor2 { get { return _body2.GetWorldPoint(_localAnchor2); } }
+		public override sVector2 Anchor1 { get { return _body1.GetWorldPoint(_localAnchor1); } }
+		public override sVector2 Anchor2 { get { return _body2.GetWorldPoint(_localAnchor2); } }
 
-		public override Vector2 GetReactionForce(float inv_dt)
+		public override sVector2 GetReactionForce(sfloat inv_dt)
 		{
 			// TODO_ERIN not tested
-			Vector2 P = _impulse * _J.Linear2;
+			sVector2 P = _impulse * _J.Linear2;
 			return inv_dt * P;
 		}
 
-		public override float GetReactionTorque(float inv_dt)
+		public override sfloat GetReactionTorque(sfloat inv_dt)
 		{
 			// TODO_ERIN not tested
-			Vector2 r = _body2.GetTransform().TransformDirection(_localAnchor2 - _body2.GetLocalCenter());
-			Vector2 P = _impulse * _J.Linear2;
-			float L = _impulse * _J.Angular2 - r.Cross(P);
+			sVector2 r = _body2.GetTransform().TransformDirection(_localAnchor2 - _body2.GetLocalCenter());
+			sVector2 P = _impulse * _J.Linear2;
+			sfloat L = _impulse * _J.Angular2 - r.Cross(P);
 			return inv_dt * L;
 		}
 
 		/// <summary>
 		/// Get the gear ratio.
 		/// </summary>
-		public float Ratio { get { return _ratio; } }
+		public sfloat Ratio { get { return _ratio; } }
 
 		public GearJoint(GearJointDef def)
 			: base(def)
@@ -161,7 +162,7 @@ namespace Box2DX.Dynamics
 			_revolute2 = null;
 			_prismatic2 = null;
 
-			float coordinate1, coordinate2;
+			sfloat coordinate1, coordinate2;
 
 			_ground1 = def.Joint1.GetBody1();
 			_body1 = def.Joint1.GetBody2();
@@ -201,7 +202,7 @@ namespace Box2DX.Dynamics
 
 			_constant = coordinate1 + _ratio * coordinate2;
 
-			_impulse = 0.0f;
+			_impulse = sfloat.Zero;
 		}
 
 		internal override void InitVelocityConstraints(TimeStep step)
@@ -211,19 +212,19 @@ namespace Box2DX.Dynamics
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			float K = 0.0f;
+			sfloat K = sfloat.Zero;
 			_J.SetZero();
 
 			if (_revolute1!=null)
 			{
-				_J.Angular1 = -1.0f;
+				_J.Angular1 = -sfloat.One;
 				K += b1._invI;
 			}
 			else
 			{
-				Vector2 ug = g1.GetTransform().TransformDirection(_prismatic1._localXAxis1);
-				Vector2 r = b1.GetTransform().TransformDirection(_localAnchor1 - b1.GetLocalCenter());
-				float crug = r.Cross(ug);
+				sVector2 ug = g1.GetTransform().TransformDirection(_prismatic1._localXAxis1);
+				sVector2 r = b1.GetTransform().TransformDirection(_localAnchor1 - b1.GetLocalCenter());
+				sfloat crug = r.Cross(ug);
 				_J.Linear1 = -ug;
 				_J.Angular1 = -crug;
 				K += b1._invMass + b1._invI * crug * crug;
@@ -236,17 +237,17 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				Vector2 ug = g2.GetTransform().TransformDirection(_prismatic2._localXAxis1);
-				Vector2 r = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
-				float crug = r.Cross(ug);
+				sVector2 ug = g2.GetTransform().TransformDirection(_prismatic2._localXAxis1);
+				sVector2 r = b2.GetTransform().TransformDirection(_localAnchor2 - b2.GetLocalCenter());
+				sfloat crug = r.Cross(ug);
 				_J.Linear2 = -_ratio * ug;
 				_J.Angular2 = -_ratio * crug;
 				K += _ratio * _ratio * (b2._invMass + b2._invI * crug * crug);
 			}
 
 			// Compute effective mass.
-			Box2DXDebug.Assert(K > 0.0f);
-			_mass = 1.0f / K;
+			Box2DXDebug.Assert(K > sfloat.Zero);
+			_mass = sfloat.One / K;
 
 			if (step.WarmStarting)
 			{
@@ -258,7 +259,7 @@ namespace Box2DX.Dynamics
 			}
 			else
 			{
-				_impulse = 0.0f;
+				_impulse = sfloat.Zero;
 			}
 		}
 
@@ -267,9 +268,9 @@ namespace Box2DX.Dynamics
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			float Cdot = _J.Compute(b1._linearVelocity, b1._angularVelocity, b2._linearVelocity, b2._angularVelocity);
+			sfloat Cdot = _J.Compute(b1._linearVelocity, b1._angularVelocity, b2._linearVelocity, b2._angularVelocity);
 
-			float impulse = _mass * (-Cdot);
+			sfloat impulse = _mass * (-Cdot);
 			_impulse += impulse;
 
 			b1._linearVelocity += b1._invMass * impulse * _J.Linear1;
@@ -278,14 +279,14 @@ namespace Box2DX.Dynamics
 			b2._angularVelocity += b2._invI * impulse * _J.Angular2;
 		}
 
-		internal override bool SolvePositionConstraints(float baumgarte)
+		internal override bool SolvePositionConstraints(sfloat baumgarte)
 		{
-			float linearError = 0.0f;
+			sfloat linearError = sfloat.Zero;
 
 			Body b1 = _body1;
 			Body b2 = _body2;
 
-			float coordinate1, coordinate2;
+			sfloat coordinate1, coordinate2;
 			if (_revolute1 != null)
 			{
 				coordinate1 = _revolute1.JointAngle;
@@ -304,9 +305,9 @@ namespace Box2DX.Dynamics
 				coordinate2 = _prismatic2.JointTranslation;
 			}
 
-			float C = _constant - (coordinate1 + _ratio * coordinate2);
+			sfloat C = _constant - (coordinate1 + _ratio * coordinate2);
 
-			float impulse = _mass * (-C);
+			sfloat impulse = _mass * (-C);
 
 			b1._sweep.C += b1._invMass * impulse * _J.Linear1;
 			b1._sweep.A += b1._invI * impulse * _J.Angular1;

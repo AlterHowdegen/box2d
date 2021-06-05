@@ -5,6 +5,7 @@ using Box2DX;
 using Box2DX.Dynamics;
 using Box2DX.Collision;
 using System;
+using SoftFloat;
 
 public class Box2DRigidbody : MonoBehaviour, ContactListener
 {
@@ -27,15 +28,15 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
 
         var bodyDefinition = new BodyDef();
         bodyDefinition.MassData = new MassData();
-        bodyDefinition.MassData.Mass = _originalRigidbody.mass < 0.1f ? 0f : _originalRigidbody.mass;
-        bodyDefinition.MassData.I = _originalRigidbody.mass < 0.1f ? 0f : _originalRigidbody.mass;
-        bodyDefinition.Position = _originalRigidbody.position;
-        bodyDefinition.Angle = transform.eulerAngles.z * Mathf.Deg2Rad;
+        bodyDefinition.MassData.Mass = (sfloat)_originalRigidbody.mass < (sfloat)0.1f ? sfloat.Zero : (sfloat)_originalRigidbody.mass;
+        bodyDefinition.MassData.I = (sfloat)_originalRigidbody.mass < (sfloat)0.1f ? sfloat.Zero : (sfloat)_originalRigidbody.mass;
+        bodyDefinition.Position = new sVector2(_originalRigidbody.position.x, _originalRigidbody.position.y);
+        bodyDefinition.Angle = (sfloat)transform.eulerAngles.z * libm.Deg2Rad;
         // bodyDefinition.FixedRotation = _originalRigidbody.freezeRotation;
         // bodyDefinition.AngularDamping = _originalRigidbody.angularDrag;
         bodyDefinition.FixedRotation = false;
-        bodyDefinition.LinearDamping = _originalRigidbody.drag;
-        bodyDefinition.AngularDamping = _originalRigidbody.angularDrag;
+        bodyDefinition.LinearDamping = (sfloat)_originalRigidbody.drag;
+        bodyDefinition.AngularDamping = (sfloat)_originalRigidbody.angularDrag;
         // bodyDefinition.AngularVelocity= 1f;
         // bodyDefinition.
         bodyDefinition.AllowSleep = true;
@@ -50,19 +51,19 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         if(_originalCollider is BoxCollider2D){
             Debug.Log("Creating polygon fixture");
             var fixtureDefinition = new PolygonDef();
-            fixtureDefinition.SetAsBox(((BoxCollider2D)_originalCollider).size.x / 2f, ((BoxCollider2D)_originalCollider).size.y / 2f);
+            fixtureDefinition.SetAsBox((sfloat)(((BoxCollider2D)_originalCollider).size.x) / (sfloat)2f, (sfloat)(((BoxCollider2D)_originalCollider).size.y) / (sfloat)2f);
             fixtureDefinition.Type = ShapeType.PolygonShape;
-            fixtureDefinition.Density = _originalCollider.density;
-            fixtureDefinition.Friction = 0.6f;
-            fixtureDefinition.Restitution = 0.5f; 
+            fixtureDefinition.Density = (sfloat)_originalCollider.density;
+            fixtureDefinition.Friction = (sfloat)0.6f;
+            fixtureDefinition.Restitution = (sfloat)0.5f; 
             body.CreateFixture(fixtureDefinition);
         }else if(_originalCollider is CircleCollider2D){
             Debug.Log("Creating circle fixture");
             var fixtureDefinition = new CircleDef();
-            fixtureDefinition.Density = _originalCollider.density;
-            fixtureDefinition.Friction = 0.6f;
-            fixtureDefinition.Restitution = 0.5f; 
-            fixtureDefinition.Radius = ((CircleCollider2D)_originalCollider).radius;
+            fixtureDefinition.Density = (sfloat)_originalCollider.density;
+            fixtureDefinition.Friction = (sfloat)0.6f;
+            fixtureDefinition.Restitution = (sfloat)0.5f; 
+            fixtureDefinition.Radius = (sfloat)((CircleCollider2D)_originalCollider).radius;
             body.CreateFixture(fixtureDefinition);
         }else{
             Debug.Log("Creating generic fixture");
@@ -84,8 +85,8 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         if(!Box2DSimulation.instance.useCustomBox2D){
             return;
         }
-        transform.position = body.GetPosition();
-        transform.eulerAngles = new Vector3(0f, 0f, body.GetAngle() * Mathf.Rad2Deg);
+        transform.position = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
+        transform.eulerAngles = new Vector3(0f, 0f, (float)body.GetAngle() * Mathf.Rad2Deg);
         // Debug.Log(body.IsDynamic());
         // Debug.Log(body._xf.position);
         // Debug.Log(body.GetAngle());

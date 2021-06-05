@@ -32,6 +32,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Dynamics
@@ -45,34 +46,34 @@ namespace Box2DX.Dynamics
 		public MouseJointDef()
 		{
 			Type = JointType.MouseJoint;
-			Target = Vector2.zero;
-			MaxForce = 0.0f;
-			FrequencyHz = 5.0f;
-			DampingRatio = 0.7f;
+			Target = sVector2.zero;
+			MaxForce = sfloat.Zero;
+			FrequencyHz = (sfloat)5.0f;
+			DampingRatio = (sfloat)0.7f;
 		}
 
 		/// <summary>
 		/// The initial world target point. This is assumed
 		/// to coincide with the body anchor initially.
 		/// </summary>
-		public Vector2 Target;
+		public sVector2 Target;
 
 		/// <summary>
 		/// The maximum constraint force that can be exerted
 		/// to move the candidate body. Usually you will express
 		/// as some multiple of the weight (multiplier * mass * gravity).
 		/// </summary>
-		public float MaxForce;
+		public sfloat MaxForce;
 
 		/// <summary>
 		/// The response speed.
 		/// </summary>
-		public float FrequencyHz;
+		public sfloat FrequencyHz;
 
 		/// <summary>
 		/// The damping ratio. 0 = no damping, 1 = critical damping.
 		/// </summary>
-		public float DampingRatio;
+		public sfloat DampingRatio;
 	}
 
 	/// <summary>
@@ -83,42 +84,42 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public class MouseJoint : Joint
 	{
-		public Vector2 _localAnchor;
-		public Vector2 _target;
-		public Vector2 _impulse;
+		public sVector2 _localAnchor;
+		public sVector2 _target;
+		public sVector2 _impulse;
 
 		public Mat22 _mass;		// effective mass for point-to-point constraint.
-		public Vector2 _C;				// position error
-		public float _maxForce;
-		public float _frequencyHz;
-		public float _dampingRatio;
-		public float _beta;
-		public float _gamma;
+		public sVector2 _C;				// position error
+		public sfloat _maxForce;
+		public sfloat _frequencyHz;
+		public sfloat _dampingRatio;
+		public sfloat _beta;
+		public sfloat _gamma;
 
-		public override Vector2 Anchor1
+		public override sVector2 Anchor1
 		{
 			get { return _target; }
 		}
 
-		public override Vector2 Anchor2
+		public override sVector2 Anchor2
 		{
 			get { return _body2.GetWorldPoint(_localAnchor); }
 		}
 
-		public override Vector2 GetReactionForce(float inv_dt)
+		public override sVector2 GetReactionForce(sfloat inv_dt)
 		{
 			return inv_dt * _impulse;
 		}
 
-		public override float GetReactionTorque(float inv_dt)
+		public override sfloat GetReactionTorque(sfloat inv_dt)
 		{
-			return inv_dt * 0.0f;
+			return inv_dt * sfloat.Zero;
 		}
 
 		/// <summary>
 		/// Use this to update the target point.
 		/// </summary>
-		public void SetTarget(Vector2 target)
+		public void SetTarget(sVector2 target)
 		{
 			if (_body2.IsSleeping())
 			{
@@ -134,49 +135,49 @@ namespace Box2DX.Dynamics
 			_localAnchor = _body2.GetTransform().InverseTransformPoint(_target);
 
 			_maxForce = def.MaxForce;
-			_impulse = Vector2.zero;
+			_impulse = sVector2.zero;
 
 			_frequencyHz = def.FrequencyHz;
 			_dampingRatio = def.DampingRatio;
 
-			_beta = 0.0f;
-			_gamma = 0.0f;
+			_beta = sfloat.Zero;
+			_gamma = sfloat.Zero;
 		}
 
 		internal override void InitVelocityConstraints(TimeStep step)
 		{
 			Body b = _body2;
 
-			float mass = b.GetMass();
+			sfloat mass = b.GetMass();
 
 			// Frequency
-			float omega = 2.0f * Settings.Pi * _frequencyHz;
+			sfloat omega = (sfloat)2.0f * Settings.Pi * _frequencyHz;
 
 			// Damping coefficient
-			float d = 2.0f * mass * _dampingRatio * omega;
+			sfloat d = (sfloat)2.0f * mass * _dampingRatio * omega;
 
 			// Spring stiffness
-			float k = mass * (omega * omega);
+			sfloat k = mass * (omega * omega);
 
 			// magic formulas
 			// gamma has units of inverse mass.
 			// beta has units of inverse time.
 			Box2DXDebug.Assert(d + step.Dt * k > Settings.FLT_EPSILON);
-			_gamma = 1.0f / (step.Dt * (d + step.Dt * k));
+			_gamma = sfloat.One / (step.Dt * (d + step.Dt * k));
 			_beta = step.Dt * k * _gamma;
 
 			// Compute the effective mass matrix.
-			Vector2 r = b.GetTransform().TransformDirection(_localAnchor - b.GetLocalCenter());
+			sVector2 r = b.GetTransform().TransformDirection(_localAnchor - b.GetLocalCenter());
 
 			// K    = [(1/m1 + 1/m2) * eye(2) - skew(r1) * invI1 * skew(r1) - skew(r2) * invI2 * skew(r2)]
 			//      = [1/m1+1/m2     0    ] + invI1 * [r1.y*r1.y -r1.x*r1.y] + invI2 * [r1.y*r1.y -r1.x*r1.y]
 			//        [    0     1/m1+1/m2]           [-r1.x*r1.y r1.x*r1.x]           [-r1.x*r1.y r1.x*r1.x]
-			float invMass = b._invMass;
-			float invI = b._invI;
+			sfloat invMass = b._invMass;
+			sfloat invI = b._invI;
 
 			Mat22 K1 = new Mat22();
-			K1.Col1.x = invMass; K1.Col2.x = 0.0f;
-			K1.Col1.y = 0.0f; K1.Col2.y = invMass;
+			K1.Col1.x = invMass; K1.Col2.x = sfloat.Zero;
+			K1.Col1.y = sfloat.Zero; K1.Col2.y = invMass;
 
 			Mat22 K2 = new Mat22();
 			K2.Col1.x = invI * r.y * r.y; K2.Col2.x = -invI * r.x * r.y;
@@ -191,7 +192,7 @@ namespace Box2DX.Dynamics
 			_C = b._sweep.C + r - _target;
 
 			// Cheat with some damping
-			b._angularVelocity *= 0.98f;
+			b._angularVelocity *= (sfloat)0.98f;
 
 			// Warm starting.
 			_impulse *= step.DtRatio;
@@ -203,15 +204,15 @@ namespace Box2DX.Dynamics
 		{
 			Body b = _body2;
 
-			Vector2 r = b.GetTransform().TransformDirection(_localAnchor - b.GetLocalCenter());
+			sVector2 r = b.GetTransform().TransformDirection(_localAnchor - b.GetLocalCenter());
 
 			// Cdot = v + cross(w, r)
-			Vector2 Cdot = b._linearVelocity + r.CrossScalarPreMultiply(b._angularVelocity);
-			Vector2 impulse = _mass.Multiply(-(Cdot + _beta * _C + _gamma * _impulse));
+			sVector2 Cdot = b._linearVelocity + r.CrossScalarPreMultiply(b._angularVelocity);
+			sVector2 impulse = _mass.Multiply(-(Cdot + _beta * _C + _gamma * _impulse));
 
-			Vector2 oldImpulse = _impulse;
+			sVector2 oldImpulse = _impulse;
 			_impulse += impulse;
-			float maxImpulse = step.Dt * _maxForce;
+			sfloat maxImpulse = step.Dt * _maxForce;
 			if (_impulse.sqrMagnitude > maxImpulse * maxImpulse)
 			{
 				_impulse *= maxImpulse / _impulse.magnitude;
@@ -222,7 +223,7 @@ namespace Box2DX.Dynamics
 			b._angularVelocity += b._invI * r.Cross(impulse);
 		}
 
-		internal override bool SolvePositionConstraints(float baumgarte)
+		internal override bool SolvePositionConstraints(sfloat baumgarte)
 		{
 			return true;
 		}

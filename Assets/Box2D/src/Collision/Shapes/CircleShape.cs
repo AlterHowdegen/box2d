@@ -20,6 +20,7 @@
 */
 
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 using Transform = Box2DX.Common.Transform;
@@ -32,57 +33,57 @@ namespace Box2DX.Collision
 	public class CircleShape : Shape
 	{
 		// Position
-		internal Vector2 _position;
+		internal sVector2 _position;
 
 		public CircleShape()			
 		{
 			_type = ShapeType.CircleShape;
 		}
 
-		public override bool TestPoint(Transform xf, Vector2 p)
+		public override bool TestPoint(Transform xf, sVector2 p)
 		{
-			Vector2 center = xf.position + xf.TransformDirection(_position);
-			Vector2 d = p - center;
-			return Vector2.Dot(d, d) <= _radius * _radius;
+			sVector2 center = xf.position + xf.TransformDirection(_position);
+			sVector2 d = p - center;
+			return sVector2.Dot(d, d) <= _radius * _radius;
 		}
 
 		// Collision Detection in Interactive 3D Environments by Gino van den Bergen
 		// From Section 3.1.2
 		// x = s + a * r
 		// norm(x) = radius
-		public override SegmentCollide TestSegment(Transform xf, out float lambda, out Vector2 normal, Segment segment, float maxLambda)
+		public override SegmentCollide TestSegment(Transform xf, out sfloat lambda, out sVector2 normal, Segment segment, sfloat maxLambda)
 		{
-			lambda = 0f;
-			normal = Vector2.zero;
+			lambda = sfloat.Zero;
+			normal = sVector2.zero;
 
-			Vector2 position = xf.position + xf.TransformDirection(_position);
-			Vector2 s = segment.P1 - position;
-			float b = Vector2.Dot(s, s) - _radius * _radius;
+			sVector2 position = xf.position + xf.TransformDirection(_position);
+			sVector2 s = segment.P1 - position;
+			sfloat b = sVector2.Dot(s, s) - _radius * _radius;
 
 			// Does the segment start inside the circle?
-			if (b < 0.0f)
+			if (b < sfloat.Zero)
 			{
-				lambda = 0f;
+				lambda = sfloat.Zero;
 				return SegmentCollide.StartInsideCollide;
 			}
 
 			// Solve quadratic equation.
-			Vector2 r = segment.P2 - segment.P1;
-			float c = Vector2.Dot(s, r);
-			float rr = Vector2.Dot(r, r);
-			float sigma = c * c - rr * b;
+			sVector2 r = segment.P2 - segment.P1;
+			sfloat c = sVector2.Dot(s, r);
+			sfloat rr = sVector2.Dot(r, r);
+			sfloat sigma = c * c - rr * b;
 
 			// Check for negative discriminant and short segment.
-			if (sigma < 0.0f || rr < Common.Settings.FLT_EPSILON)
+			if (sigma < sfloat.Zero || rr < Common.Settings.FLT_EPSILON)
 			{
 				return SegmentCollide.MissCollide;
 			}
 
 			// Find the point of intersection of the line with the circle.
-			float a = -(c + Common.Math.Sqrt(sigma));
+			sfloat a = -(c + Common.Math.Sqrt(sigma));
 
 			// Is the intersection point on the segment?
-			if (0.0f <= a && a <= maxLambda * rr)
+			if (sfloat.Zero <= a && a <= maxLambda * rr)
 			{
 				a /= rr;
 				lambda = a;
@@ -98,31 +99,31 @@ namespace Box2DX.Collision
 		{
 			aabb = new AABB();
 
-			Vector2 p = xf.position + xf.TransformDirection(_position);
-			aabb.LowerBound = new Vector2(p.x - _radius, p.y - _radius);
-			aabb.UpperBound = new Vector2(p.x + _radius, p.y + _radius);
+			sVector2 p = xf.position + xf.TransformDirection(_position);
+			aabb.LowerBound = new sVector2(p.x - _radius, p.y - _radius);
+			aabb.UpperBound = new sVector2(p.x + _radius, p.y + _radius);
 		}
 
-		public override void ComputeMass(out MassData massData, float density)
+		public override void ComputeMass(out MassData massData, sfloat density)
 		{
 			massData = new MassData();
 
-			massData.Mass = density * Mathf.PI * _radius * _radius;
+			massData.Mass = density * (sfloat)libm.pi * _radius * _radius;
 			massData.Center = _position;
 
 			// inertia about the local origin
-			massData.I = massData.Mass * (0.5f * _radius * _radius + Vector2.Dot(_position, _position));
+			massData.I = massData.Mass * ((sfloat)0.5f * _radius * _radius + sVector2.Dot(_position, _position));
 		}		
 
-		public override float ComputeSubmergedArea(Vector2 normal, float offset, Transform xf, out Vector2 c)
+		public override sfloat ComputeSubmergedArea(sVector2 normal, sfloat offset, Transform xf, out sVector2 c)
 		{
-			Vector2 p = xf.TransformPoint(_position);
-			float l = -(Vector2.Dot(normal, p) - offset);
+			sVector2 p = xf.TransformPoint(_position);
+			sfloat l = -(sVector2.Dot(normal, p) - offset);
 			if (l < -_radius + Box2DX.Common.Settings.FLT_EPSILON)
 			{
 				//Completely dry
-				c = new Vector2();
-				return 0;
+				c = new sVector2();
+				return sfloat.Zero;
 			}
 			if (l > _radius)
 			{
@@ -132,11 +133,11 @@ namespace Box2DX.Collision
 			}
 
 			//Magic
-			float r2 = _radius * _radius;
-			float l2 = l * l;
-			float area = r2 * ((float)System.Math.Asin(l / _radius) + Box2DX.Common.Settings.Pi / 2) +
+			sfloat r2 = _radius * _radius;
+			sfloat l2 = l * l;
+			sfloat area = r2 * ((sfloat)libm.asinf(l / _radius) + Box2DX.Common.Settings.Pi / (sfloat)2) +
 				l * Box2DX.Common.Math.Sqrt(r2 - l2);
-			float com = -2.0f / 3.0f * (float)System.Math.Pow(r2 - l2, 1.5f) / area;
+			sfloat com = -(sfloat)2.0f / (sfloat)3.0f * (sfloat)libm.powf(r2 - l2, (sfloat)1.5f) / area;
 
 			c.x = p.x + normal.x * com;
 			c.y = p.y + normal.y * com;
@@ -147,7 +148,7 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Get the supporting vertex index in the given direction.
 		/// </summary>
-		public override int GetSupport(Vector2 d)
+		public override int GetSupport(sVector2 d)
 		{
 			return 0;
 		}
@@ -155,7 +156,7 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Get the supporting vertex in the given direction.
 		/// </summary>
-		public override Vector2 GetSupportVertex(Vector2 d)
+		public override sVector2 GetSupportVertex(sVector2 d)
 		{
 			return _position;
 		}
@@ -163,15 +164,15 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Get a vertex by index. Used by Distance.
 		/// </summary>
-		public override Vector2 GetVertex(int index)
+		public override sVector2 GetVertex(int index)
 		{
 			Box2DXDebug.Assert(index == 0);
 			return _position;
 		}
 
-		public override float ComputeSweepRadius(Vector2 pivot)
+		public override sfloat ComputeSweepRadius(sVector2 pivot)
 		{
-			return Vector2.Distance(_position, pivot);
+			return sVector2.Distance(_position, pivot);
 		}
 
 		/// <summary>

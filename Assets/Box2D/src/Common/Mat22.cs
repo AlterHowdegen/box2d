@@ -22,7 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Common
@@ -32,13 +32,13 @@ namespace Box2DX.Common
 	/// </summary>
 	public struct Mat22
 	{
-		public Vector2 Col1;
-		public Vector2 Col2;
+		public sVector2 Col1;
+		public sVector2 Col2;
 
 		/// <summary>
 		/// Construct this matrix using columns.
 		/// </summary>
-		public Mat22(Vector2 c1, Vector2 c2)
+		public Mat22(sVector2 c1, sVector2 c2)
 		{
 			Col1 = c1;
 			Col2 = c2;
@@ -47,7 +47,7 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Construct this matrix using scalars.
 		/// </summary>
-		public Mat22(float a11, float a12, float a21, float a22)
+		public Mat22(sfloat a11, sfloat a12, sfloat a21, sfloat a22)
 		{
 			Col1.x = a11; Col1.y = a21;
 			Col2.x = a12; Col2.y = a22;
@@ -57,10 +57,10 @@ namespace Box2DX.Common
 		/// Construct this matrix using an angle. 
 		/// This matrix becomes an orthonormal rotation matrix.
 		/// </summary>
-		public Mat22(float angle)
+		public Mat22(sfloat angle)
 		{
-			float c = Mathf.Cos(angle);
-			float s = Mathf.Sin(angle);
+			sfloat c = libm.cosf(angle);
+			sfloat s = libm.sinf(angle);
 			Col1.x = c; Col2.x = -s;
 			Col1.y = s; Col2.y = c;
 		}
@@ -68,7 +68,7 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Initialize this matrix using columns.
 		/// </summary>
-		public void Set(Vector2 c1, Vector2 c2)
+		public void Set(sVector2 c1, sVector2 c2)
 		{
 			Col1 = c1;
 			Col2 = c2;
@@ -78,10 +78,10 @@ namespace Box2DX.Common
 		/// Initialize this matrix using an angle.
 		/// This matrix becomes an orthonormal rotation matrix.
 		/// </summary>
-		public void Set(float angle)
+		public void Set(sfloat angle)
 		{
-			float c = Mathf.Cos(angle);
-			float s = Mathf.Sin(angle);
+			sfloat c = libm.cosf(angle);
+			sfloat s = libm.sinf(angle);
 			Col1.x = c; Col2.x = -s;
 			Col1.y = s; Col2.y = c;
 		}
@@ -89,13 +89,13 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Extract the angle from this matrix (assumed to be a rotation matrix).
 		/// </summary>
-		public float GetAngle()
+		public sfloat GetAngle()
 		{
-			return Mathf.Atan2(Col1.y, Col1.x);
+			return libm.atan2f(Col1.y, Col1.x);
 		}
 		
-		public Vector2 Multiply(Vector2 vector) { 
-			return new Vector2(Col1.x * vector.x + Col2.x * vector.y, Col1.y * vector.x + Col2.y * vector.y);
+		public sVector2 Multiply(sVector2 vector) { 
+			return new sVector2(Col1.x * vector.x + Col2.x * vector.y, Col1.y * vector.x + Col2.y * vector.y);
 		}
 		
 		/// <summary>
@@ -103,11 +103,11 @@ namespace Box2DX.Common
 		/// </summary>
 		public Mat22 GetInverse()
 		{
-			float a = Col1.x, b = Col2.x, c = Col1.y, d = Col2.y;
+			sfloat a = Col1.x, b = Col2.x, c = Col1.y, d = Col2.y;
 			Mat22 B = new Mat22();
-			float det = a * d - b * c;
-			Box2DXDebug.Assert(det != 0.0f);
-			det = 1.0f / det;
+			sfloat det = a * d - b * c;
+			Box2DXDebug.Assert(det != sfloat.Zero);
+			det = sfloat.One / det;
 			B.Col1.x = det * d; B.Col2.x = -det * b;
 			B.Col1.y = -det * c; B.Col2.y = det * a;
 			return B;
@@ -117,19 +117,19 @@ namespace Box2DX.Common
 		/// Solve A * x = b, where b is a column vector. This is more efficient
 		/// than computing the inverse in one-shot cases.
 		/// </summary>
-		public Vector2 Solve(Vector2 b)
+		public sVector2 Solve(sVector2 b)
 		{
-			float a11 = Col1.x, a12 = Col2.x, a21 = Col1.y, a22 = Col2.y;
-			float det = a11 * a22 - a12 * a21;
-			Box2DXDebug.Assert(det != 0.0f);
-			det = 1.0f / det;
-			Vector2 x = new Vector2();
+			sfloat a11 = Col1.x, a12 = Col2.x, a21 = Col1.y, a22 = Col2.y;
+			sfloat det = a11 * a22 - a12 * a21;
+			Box2DXDebug.Assert(det != sfloat.Zero);
+			det = sfloat.One / det;
+			sVector2 x = new sVector2();
 			x.x = det * (a22 * b.x - a12 * b.y);
 			x.y = det * (a11 * b.y - a21 * b.x);
 			return x;
 		}
 
-		public static Mat22 Identity { get { return new Mat22(1, 0, 0, 1); } }
+		public static Mat22 Identity { get { return new Mat22(sfloat.One, sfloat.Zero, sfloat.Zero, sfloat.One); } }
 
 		public static Mat22 operator +(Mat22 A, Mat22 B)
 		{

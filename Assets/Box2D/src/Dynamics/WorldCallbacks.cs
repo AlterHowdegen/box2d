@@ -26,6 +26,7 @@ using Box2DX.Collision;
 
 using UnityEngine;
 using Transform = Box2DX.Common.Transform;
+using SoftFloat;
 
 namespace Box2DX.Dynamics
 {
@@ -106,8 +107,8 @@ namespace Box2DX.Dynamics
 	/// match up one-to-one with the contact points in b2Manifold.
 	public class ContactImpulse
 	{
-		public float[] normalImpulses = new float[Settings.MaxManifoldPoints];
-		public float[] tangentImpulses = new float[Settings.MaxManifoldPoints];
+		public sfloat[] normalImpulses = new sfloat[Settings.MaxManifoldPoints];
+		public sfloat[] tangentImpulses = new sfloat[Settings.MaxManifoldPoints];
 	}
 
 	/// Implement this class to get contact information. You can use these results for
@@ -212,27 +213,27 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Draw a closed polygon provided in CCW order.
 		/// </summary>
-		public abstract void DrawPolygon(Vector2[] vertices, int vertexCount, Color color);
+		public abstract void DrawPolygon(sVector2[] vertices, int vertexCount, Color color);
 
 		/// <summary>
 		/// Draw a solid closed polygon provided in CCW order.
 		/// </summary>
-		public abstract void DrawSolidPolygon(Vector2[] vertices, int vertexCount, Color color);
+		public abstract void DrawSolidPolygon(sVector2[] vertices, int vertexCount, Color color);
 
 		/// <summary>
 		/// Draw a circle.
 		/// </summary>
-		public abstract void DrawCircle(Vector2 center, float radius, Color color);
+		public abstract void DrawCircle(sVector2 center, sfloat radius, Color color);
 
 		/// <summary>
 		/// Draw a solid circle.
 		/// </summary>
-		public abstract void DrawSolidCircle(Vector2 center, float radius, Vector2 axis, Color color);
+		public abstract void DrawSolidCircle(sVector2 center, sfloat radius, sVector2 axis, Color color);
 
 		/// <summary>
 		/// Draw a line segment.
 		/// </summary>
-		public abstract void DrawSegment(Vector2 p1, Vector2 p2, Color color);
+		public abstract void DrawSegment(sVector2 p1, sVector2 p2, Color color);
 
 		/// <summary>
 		/// Draw a Transform. Choose your own length scale.

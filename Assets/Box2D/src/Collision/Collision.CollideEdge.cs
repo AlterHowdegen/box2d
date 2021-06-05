@@ -20,6 +20,7 @@
 */
 
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 using Transform = Box2DX.Common.Transform;
@@ -32,17 +33,17 @@ namespace Box2DX.Collision
 		public static void CollideEdgeAndCircle(ref Manifold manifold, EdgeShape edge, Transform transformA, CircleShape circle, Transform transformB)
 		{
 			manifold.PointCount = 0;
-			Vector2 cLocal = Common.Math.MulT(transformA, Common.Math.Mul(transformB, circle._position));
-			Vector2 normal = edge._normal;
-			Vector2 v1 = edge._v1;
-			Vector2 v2 = edge._v2;
-			float radius = edge._radius + circle._radius;
+			sVector2 cLocal = Common.Math.MulT(transformA, Common.Math.Mul(transformB, circle._position));
+			sVector2 normal = edge._normal;
+			sVector2 v1 = edge._v1;
+			sVector2 v2 = edge._v2;
+			sfloat radius = edge._radius + circle._radius;
 
 			// Barycentric coordinates
-			float u1 = Vector2.Dot(cLocal - v1, v2 - v1);
-			float u2 = Vector2.Dot(cLocal - v2, v1 - v2);
+			sfloat u1 = sVector2.Dot(cLocal - v1, v2 - v1);
+			sfloat u2 = sVector2.Dot(cLocal - v2, v1 - v2);
 
-			if (u1 <= 0.0f)
+			if (u1 <= sfloat.Zero)
 			{
 				// Behind v1
 				if ((cLocal- v1).sqrMagnitude > radius * radius)
@@ -58,7 +59,7 @@ namespace Box2DX.Collision
 				manifold.Points[0].LocalPoint = circle._position;
 				manifold.Points[0].ID.Key = 0;
 			}
-			else if (u2 <= 0.0f)
+			else if (u2 <= sfloat.Zero)
 			{
 				// Ahead of v2
 				if ((cLocal- v2).sqrMagnitude > radius * radius)
@@ -76,7 +77,7 @@ namespace Box2DX.Collision
 			}
 			else
 			{
-				float separation = Vector2.Dot(cLocal - v1, normal);
+				sfloat separation = sVector2.Dot(cLocal - v1, normal);
 				if (separation < -radius || radius < separation)
 				{
 					return;
@@ -84,8 +85,8 @@ namespace Box2DX.Collision
 				
 				manifold.PointCount = 1;
 				manifold.Type = ManifoldType.FaceA;
-				manifold.LocalPlaneNormal = separation < 0.0f ? -normal : normal;
-				manifold.LocalPoint = 0.5f * (v1 + v2);
+				manifold.LocalPlaneNormal = separation < sfloat.Zero ? -normal : normal;
+				manifold.LocalPoint = (sfloat)0.5f * (v1 + v2);
 				manifold.Points[0].LocalPoint = circle._position;
 				manifold.Points[0].ID.Key = 0;
 			}

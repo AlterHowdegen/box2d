@@ -21,6 +21,7 @@
 
 using System;
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 using Transform = Box2DX.Common.Transform;
@@ -35,17 +36,17 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// The mass of the shape, usually in kilograms.
 		/// </summary>
-		public float Mass;
+		public sfloat Mass;
 
 		/// <summary>
 		/// The position of the shape's centroid relative to the shape's origin.
 		/// </summary>
-		public Vector2 Center;
+		public sVector2 Center;
 
 		/// <summary>
 		/// The rotational inertia of the shape.
 		/// </summary>
-		public float I;
+		public sfloat I;
 	}
 
 	/// <summary>
@@ -79,7 +80,7 @@ namespace Box2DX.Collision
 		#region Fields
 
 		protected ShapeType _type = ShapeType.UnknownShape;
-		internal float _radius;
+		internal sfloat _radius;
 
 		#endregion Fields
 
@@ -91,7 +92,7 @@ namespace Box2DX.Collision
 		/// <param name="xf">The shape world Transform.</param>
 		/// <param name="p">A point in world coordinates.</param>
 		/// <returns></returns>
-		public abstract bool TestPoint(Transform xf, Vector2 p);
+		public abstract bool TestPoint(Transform xf, sVector2 p);
 
 		/// <summary>
 		/// Perform a ray cast against this shape.
@@ -103,7 +104,7 @@ namespace Box2DX.Collision
 		/// the normal is not set.</param>
 		/// <param name="segment">Defines the begin and end point of the ray cast.</param>
 		/// <param name="maxLambda">A number typically in the range [0,1].</param>
-		public abstract SegmentCollide TestSegment(Transform xf, out float lambda, out Vector2 normal, Segment segment, float maxLambda);
+		public abstract SegmentCollide TestSegment(Transform xf, out sfloat lambda, out sVector2 normal, Segment segment, sfloat maxLambda);
 
 		/// <summary>
 		/// Given a Transform, compute the associated axis aligned bounding box for this shape.
@@ -117,7 +118,7 @@ namespace Box2DX.Collision
 		/// The inertia tensor is computed about the local origin, not the centroid.
 		/// </summary>
 		/// <param name="massData">Returns the mass data for this shape</param>
-		public abstract void ComputeMass(out MassData massData, float density);
+		public abstract void ComputeMass(out MassData massData, sfloat density);
 
 		/// <summary>
 		/// Compute the volume and centroid of this shape intersected with a half plane.
@@ -127,20 +128,20 @@ namespace Box2DX.Collision
 		/// <param name="xf">The shape Transform.</param>
 		/// <param name="c">Returns the centroid.</param>
 		/// <returns>The total volume less than offset along normal.</returns>
-		public abstract float ComputeSubmergedArea(Vector2 normal, float offset, Transform xf, out Vector2 c);
+		public abstract sfloat ComputeSubmergedArea(sVector2 normal, sfloat offset, Transform xf, out sVector2 c);
 
 		/// <summary>
 		/// Compute the sweep radius. This is used for conservative advancement (continuous collision detection).
 		/// </summary>
 		/// <param name="pivot">Pivot is the pivot point for rotation.</param>
 		/// <returns>The distance of the furthest point from the pivot.</returns>
-		public abstract float ComputeSweepRadius(Vector2 pivot);
+		public abstract sfloat ComputeSweepRadius(sVector2 pivot);
 
-		public abstract Vector2 GetVertex(int index);
+		public abstract sVector2 GetVertex(int index);
 
-		public abstract int GetSupport(Vector2 d);
+		public abstract int GetSupport(sVector2 d);
 
-		public abstract Vector2 GetSupportVertex(Vector2 d);
+		public abstract sVector2 GetSupportVertex(sVector2 d);
 
 		public virtual void Dispose(){}
  	}

@@ -20,6 +20,7 @@ using Box2DX.Common;
 using Math = Box2DX.Common.Math;
 
 using UnityEngine;
+using SoftFloat;
 
 namespace Box2DX.Dynamics.Controllers
 {
@@ -29,7 +30,7 @@ namespace Box2DX.Dynamics.Controllers
         /// <summary>
         /// Specifies the strength of the gravitiation force
         /// </summary>
-        public float G;
+        public sfloat G;
 
         /// <summary>
         /// If true, gravity is proportional to r^-2, otherwise r^-1
@@ -42,7 +43,7 @@ namespace Box2DX.Dynamics.Controllers
         /// <summary>
         /// Specifies the strength of the gravitiation force
         /// </summary>
-        public float G;
+        public sfloat G;
 
         /// If true, gravity is proportional to r^-2, otherwise r^-1
         public bool InvSqr;
@@ -64,14 +65,14 @@ namespace Box2DX.Dynamics.Controllers
                     for (ControllerEdge j = _bodyList; j != i; j = j.nextBody)
                     {
                         Body body2 = j.body;
-                        Vector2 d = body2.GetWorldCenter() - body1.GetWorldCenter();
-                        float r2 = d.sqrMagnitude;
+                        sVector2 d = body2.GetWorldCenter() - body1.GetWorldCenter();
+                        sfloat r2 = d.sqrMagnitude;
                         if (r2 < Settings.FLT_EPSILON)
                             continue;
 
-                        Vector2 f = G / r2 / Math.Sqrt(r2) * body1.GetMass() * body2.GetMass() * d;
+                        sVector2 f = G / r2 / Math.Sqrt(r2) * body1.GetMass() * body2.GetMass() * d;
                         body1.ApplyForce(f, body1.GetWorldCenter());
-                        body2.ApplyForce(-1.0f * f, body2.GetWorldCenter());
+                        body2.ApplyForce(-sfloat.One * f, body2.GetWorldCenter());
                     }
                 }
             }
@@ -83,13 +84,13 @@ namespace Box2DX.Dynamics.Controllers
                     for (ControllerEdge j = _bodyList; j != i; j = j.nextBody)
                     {
                         Body body2 = j.body;
-                        Vector2 d = body2.GetWorldCenter() - body1.GetWorldCenter();
-                        float r2 = d.sqrMagnitude;
+                        sVector2 d = body2.GetWorldCenter() - body1.GetWorldCenter();
+                        sfloat r2 = d.sqrMagnitude;
                         if (r2 < Settings.FLT_EPSILON)
                             continue;
-                        Vector2 f = G / r2 * body1.GetMass() * body2.GetMass() * d;
+                        sVector2 f = G / r2 * body1.GetMass() * body2.GetMass() * d;
                         body1.ApplyForce(f, body1.GetWorldCenter());
-                        body2.ApplyForce(-1.0f * f, body2.GetWorldCenter());
+                        body2.ApplyForce(-sfloat.One * f, body2.GetWorldCenter());
                     }
                 }
             }

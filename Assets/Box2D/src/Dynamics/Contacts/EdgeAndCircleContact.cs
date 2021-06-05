@@ -21,6 +21,7 @@
 
 using Box2DX.Collision;
 using Box2DX.Common;
+using SoftFloat;
 
 namespace Box2DX.Dynamics
 {
@@ -32,8 +33,8 @@ namespace Box2DX.Dynamics
 			Box2DXDebug.Assert(fixtureA.ShapeType == ShapeType.EdgeShape);
 			Box2DXDebug.Assert(fixtureB.ShapeType == ShapeType.CircleShape);
 			_manifold.PointCount = 0;
-			_manifold.Points[0].NormalImpulse = 0.0f;
-			_manifold.Points[0].TangentImpulse = 0.0f;
+			_manifold.Points[0].NormalImpulse = sfloat.Zero;
+			_manifold.Points[0].TangentImpulse = sfloat.Zero;
 			CollideShapeFunction = CollideEdgeAndCircle;
 		}
 

@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 using Transform = Box2DX.Common.Transform;
@@ -31,20 +32,20 @@ namespace Box2DX.Collision
 {
 	public class EdgeShape : Shape
 	{
-		public Vector2 _v1;
-		public Vector2 _v2;
+		public sVector2 _v1;
+		public sVector2 _v2;
 
-		public float _length;
+		public sfloat _length;
 
-		public Vector2 _normal;
+		public sVector2 _normal;
 
-		public Vector2 _direction;
+		public sVector2 _direction;
 
 		// Unit vector halfway between m_direction and m_prevEdge.m_direction:
-		public Vector2 _cornerDir1;
+		public sVector2 _cornerDir1;
 
 		// Unit vector halfway between m_direction and m_nextEdge.m_direction:
-		public Vector2 _cornerDir2;
+		public sVector2 _cornerDir2;
 
 		public bool _cornerConvex1;
 		public bool _cornerConvex2;
@@ -71,7 +72,7 @@ namespace Box2DX.Collision
 			}
 		}
 
-		public void Set(Vector2 v1, Vector2 v2)
+		public void Set(sVector2 v1, sVector2 v2)
 		{
 			_v1 = v1;
 			_v2 = v2;
@@ -79,40 +80,40 @@ namespace Box2DX.Collision
 			_direction = _v2 - _v1;
 			_length = _direction.magnitude;
 			_direction.Normalize();
-			_normal = _direction.CrossScalarPostMultiply(1.0f);
+			_normal = _direction.CrossScalarPostMultiply(sfloat.One);
 
 			_cornerDir1 = _normal;
-			_cornerDir2 = -1.0f * _normal;
+			_cornerDir2 = -sfloat.One * _normal;
 		}
 
-		public override bool TestPoint(Transform xf, Vector2 p)
+		public override bool TestPoint(Transform xf, sVector2 p)
 		{
 			return false;
 		}
 
-		public override SegmentCollide TestSegment(Transform xf, out float lambda, out Vector2 normal, Segment segment, float maxLambda)
+		public override SegmentCollide TestSegment(Transform xf, out sfloat lambda, out sVector2 normal, Segment segment, sfloat maxLambda)
 		{
-			Vector2 r = segment.P2 - segment.P1;
-			Vector2 v1 = xf.TransformPoint(_v1);
-			Vector2 d = ((Vector2)xf.TransformPoint(_v2)) - v1;
-			Vector2 n = d.CrossScalarPostMultiply(1.0f);
+			sVector2 r = segment.P2 - segment.P1;
+			sVector2 v1 = xf.TransformPoint(_v1);
+			sVector2 d = ((sVector2)xf.TransformPoint(_v2)) - v1;
+			sVector2 n = d.CrossScalarPostMultiply(sfloat.One);
 
-			float k_slop = 100.0f * Common.Settings.FLT_EPSILON;
-			float denom = -Vector2.Dot(r, n);
+			sfloat k_slop = (sfloat)100.0f * Common.Settings.FLT_EPSILON;
+			sfloat denom = -sVector2.Dot(r, n);
 
 			// Cull back facing collision and ignore parallel segments.
 			if (denom > k_slop)
 			{
 				// Does the segment intersect the infinite line associated with this segment?
-				Vector2 b = segment.P1 - v1;
-				float a = Vector2.Dot(b, n);
+				sVector2 b = segment.P1 - v1;
+				sfloat a = sVector2.Dot(b, n);
 
-				if (0.0f <= a && a <= maxLambda * denom)
+				if (sfloat.Zero <= a && a <= maxLambda * denom)
 				{
-					float mu2 = -r.x * b.y + r.y * b.x;
+					sfloat mu2 = -r.x * b.y + r.y * b.x;
 
 					// Does the segment intersect this segment?
-					if (-k_slop * denom <= mu2 && mu2 <= denom * (1.0f + k_slop))
+					if (-k_slop * denom <= mu2 && mu2 <= denom * (sfloat.One + k_slop))
 					{
 						a /= denom;
 						n.Normalize();
@@ -123,61 +124,61 @@ namespace Box2DX.Collision
 				}
 			}
 
-			lambda = 0;
-			normal = new Vector2();
+			lambda = sfloat.Zero;
+			normal = new sVector2();
 			return SegmentCollide.MissCollide;
 		}
 
 		public override void ComputeAABB(out AABB aabb, Transform xf)
 		{
-			Vector2 v1 = xf.TransformPoint(_v1);
-			Vector2 v2 = xf.TransformPoint(_v2);
+			sVector2 v1 = xf.TransformPoint(_v1);
+			sVector2 v2 = xf.TransformPoint(_v2);
 
-			Vector2 r = new Vector2(_radius, _radius);
-			aabb.LowerBound = Vector2.Min(v1, v2) - r;
-			aabb.UpperBound = Vector2.Max(v1, v2) + r;
+			sVector2 r = new sVector2(_radius, _radius);
+			aabb.LowerBound = sVector2.Min(v1, v2) - r;
+			aabb.UpperBound = sVector2.Max(v1, v2) + r;
 		}
 
-		public override void ComputeMass(out MassData massData, float density)
+		public override void ComputeMass(out MassData massData, sfloat density)
 		{
-			massData.Mass = 0.0f;
+			massData.Mass = sfloat.Zero;
 			massData.Center = _v1;
-			massData.I = 0.0f;
+			massData.I = sfloat.Zero;
 		}
 
-		public void SetPrevEdge(EdgeShape edge, Vector2 cornerDir, bool convex)
+		public void SetPrevEdge(EdgeShape edge, sVector2 cornerDir, bool convex)
 		{
 			_prevEdge = edge;
 			_cornerDir1 = cornerDir;
 			_cornerConvex1 = convex;
 		}
 
-		public void SetNextEdge(EdgeShape edge, Vector2 cornerDir, bool convex)
+		public void SetNextEdge(EdgeShape edge, sVector2 cornerDir, bool convex)
 		{
 			_nextEdge = edge;
 			_cornerDir2 = cornerDir;
 			_cornerConvex2 = convex;
 		}
 
-		public override float ComputeSubmergedArea(Vector2 normal, float offset, Transform xf, out Vector2 c)
+		public override sfloat ComputeSubmergedArea(sVector2 normal, sfloat offset, Transform xf, out sVector2 c)
 		{
 			//Note that v0 is independent of any details of the specific edge
 			//We are relying on v0 being consistent between multiple edges of the same body
-			Vector2 v0 = offset * normal;
+			sVector2 v0 = offset * normal;
 			//b2Vec2 v0 = xf.position + (offset - b2Dot(normal, xf.position)) * normal;
 
-			Vector2 v1 = xf.TransformPoint(_v1);
-			Vector2 v2 = xf.TransformPoint(_v2);
+			sVector2 v1 = xf.TransformPoint(_v1);
+			sVector2 v2 = xf.TransformPoint(_v2);
 
-			float d1 = Vector2.Dot(normal, v1) - offset;
-			float d2 = Vector2.Dot(normal, v2) - offset;
+			sfloat d1 = sVector2.Dot(normal, v1) - offset;
+			sfloat d2 = sVector2.Dot(normal, v2) - offset;
 
-			if (d1 > 0.0f)
+			if (d1 > sfloat.Zero)
 			{
-				if (d2 > 0.0f)
+				if (d2 > sfloat.Zero)
 				{
-					c = new Vector2();
-					return 0.0f;
+					c = new sVector2();
+					return sfloat.Zero;
 				}
 				else
 				{
@@ -186,7 +187,7 @@ namespace Box2DX.Collision
 			}
 			else
 			{
-				if (d2 > 0.0f)
+				if (d2 > sfloat.Zero)
 				{
 					v2 = -d2 / (d1 - d2) * v1 + d1 / (d1 - d2) * v2;
 				}
@@ -197,63 +198,63 @@ namespace Box2DX.Collision
 			}
 
 			// v0,v1,v2 represents a fully submerged triangle
-			float k_inv3 = 1.0f / 3.0f;
+			sfloat k_inv3 = sfloat.One / (sfloat)3.0f;
 
 			// Area weighted centroid
 			c = k_inv3 * (v0 + v1 + v2);
 
-			Vector2 e1 = v1 - v0;
-			Vector2 e2 = v2 - v0;
+			sVector2 e1 = v1 - v0;
+			sVector2 e2 = v2 - v0;
 
-			return 0.5f * e1.Cross(e2);
+			return (sfloat)0.5f * e1.Cross(e2);
 		}
 
-		public float Length
+		public sfloat Length
 		{
 			get { return _length; }
 		}
 
-		public Vector2 Vertex1
+		public sVector2 Vertex1
 		{
 			get { return _v1; }
 		}
 
-		public Vector2 Vertex2
+		public sVector2 Vertex2
 		{
 			get { return _v2; }
 		}
 
-		public Vector2 NormalVector
+		public sVector2 NormalVector
 		{
 			get { return _normal; }
 		}
 
-		public Vector2 DirectionVector
+		public sVector2 DirectionVector
 		{
 			get { return _direction; }
 		}
 
-		public Vector2 Corner1Vector
+		public sVector2 Corner1Vector
 		{
 			get { return _cornerDir1; }
 		}
 
-		public Vector2 Corner2Vector
+		public sVector2 Corner2Vector
 		{
 			get { return _cornerDir2; }
 		}
 
-		public override int GetSupport(Vector2 d)
+		public override int GetSupport(sVector2 d)
 		{
-			return Vector2.Dot(_v1, d) > Vector2.Dot(_v2, d) ? 0 : 1;
+			return sVector2.Dot(_v1, d) > sVector2.Dot(_v2, d) ? 0 : 1;
 		}
 
-		public override Vector2 GetSupportVertex(Vector2 d)
+		public override sVector2 GetSupportVertex(sVector2 d)
 		{
-			return Vector2.Dot(_v1, d) > Vector2.Dot(_v2, d) ? _v1 : _v2;
+			return sVector2.Dot(_v1, d) > sVector2.Dot(_v2, d) ? _v1 : _v2;
 		}
 
-		public override Vector2 GetVertex(int index)
+		public override sVector2 GetVertex(int index)
 		{
 			Box2DXDebug.Assert(0 <= index && index < 2);
 			if (index == 0) return _v1;
@@ -270,11 +271,11 @@ namespace Box2DX.Collision
 			get { return _cornerConvex2; }
 		}
 
-		public override float ComputeSweepRadius(Vector2 pivot)
+		public override sfloat ComputeSweepRadius(sVector2 pivot)
 		{
-			float ds1 = (_v1 - pivot).sqrMagnitude;
-			float ds2 = (_v2 - pivot).sqrMagnitude;
-			return Mathf.Sqrt(Mathf.Max(ds1, ds2));
+			sfloat ds1 = (_v1 - pivot).sqrMagnitude;
+			sfloat ds2 = (_v2 - pivot).sqrMagnitude;
+			return libm.sqrtf(sfloat.Max(ds1, ds2));
 		}
 	}
 }

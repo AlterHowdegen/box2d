@@ -22,25 +22,26 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using SoftFloat;
 
 namespace Box2DX.Common
 {
 	public class Settings
 	{
-#if TARGET_FLOAT32_IS_FIXED
-		public static readonly float FLT_EPSILON = FIXED_EPSILON;
-		public static readonly float FLT_MAX = FIXED_MAX;
-		public static float	FORCE_SCALE2(x){ return x<<7;}
-		public static float FORCE_INV_SCALE2(x)	{return x>>7;}
+#if TARGET_sfloat32_IS_FIXED
+		public static readonly sfloat FLT_EPSILON = FIXED_EPSILON;
+		public static readonly sfloat FLT_MAX = FIXED_MAX;
+		public static sfloat	FORCE_SCALE2(x){ return x<<7;}
+		public static sfloat FORCE_INV_SCALE2(x)	{return x>>7;}
 #else
-		public static readonly float FLT_EPSILON = 1.192092896e-07F;//smallest such that 1.0f+FLT_EPSILON != 1.0f
-		public static readonly float FLT_EPSILON_SQUARED = FLT_EPSILON * FLT_EPSILON;//smallest such that 1.0f+FLT_EPSILON != 1.0f
-		public static readonly float FLT_MAX = 3.402823466e+38F;
-		public static float FORCE_SCALE(float x) { return x; }
-		public static float FORCE_INV_SCALE(float x) { return x; }
+		public static readonly sfloat FLT_EPSILON = (sfloat)1.192092896e-07F;//smallest such that 1.0f+FLT_EPSILON != 1.0f
+		public static readonly sfloat FLT_EPSILON_SQUARED = FLT_EPSILON * FLT_EPSILON;//smallest such that 1.0f+FLT_EPSILON != 1.0f
+		public static readonly sfloat FLT_MAX = (sfloat)3.402823466e+38F;
+		public static sfloat FORCE_SCALE(sfloat x) { return x; }
+		public static sfloat FORCE_INV_SCALE(sfloat x) { return x; }
 #endif
 
-		public static readonly float Pi = 3.14159265359f;
+		public static readonly sfloat Pi = (sfloat)libm.pi;
 
 		// Global tuning constants based on meters-kilograms-seconds (MKS) units.
 
@@ -56,27 +57,27 @@ namespace Box2DX.Common
 		/// A small length used as a collision and constraint tolerance. Usually it is
 		/// chosen to be numerically significant, but visually insignificant.
 		/// </summary>
-		public static readonly float LinearSlop = 0.005f;	// 0.5 cm
+		public static readonly sfloat LinearSlop = (sfloat)0.005f;	// 0.5 cm
 
 		/// <summary>
 		/// A small angle used as a collision and constraint tolerance. Usually it is
 		/// chosen to be numerically significant, but visually insignificant.
 		/// </summary>
-		public static readonly float AngularSlop = 2.0f / 180.0f * Pi; // 2 degrees
+		public static readonly sfloat AngularSlop = (sfloat)2.0f / (sfloat)180.0f * Pi; // 2 degrees
 
 		/// <summary>
 		/// The radius of the polygon/edge shape skin. This should not be modified. Making
 		/// this smaller means polygons will have and insufficient for continuous collision.
 		/// Making it larger may create artifacts for vertex collision.
 		/// </summary>
-		public static readonly float PolygonRadius = 2.0f * LinearSlop;
+		public static readonly sfloat PolygonRadius = (sfloat)2.0f * LinearSlop;
 
 		/// <summary>
 		/// Continuous collision detection (CCD) works with core, shrunken shapes. This is amount
 		/// by which shapes are automatically shrunk to work with CCD. 
 		/// This must be larger than LinearSlop.
 		/// </summary>
-		public static readonly float ToiSlop = 8.0f * LinearSlop;
+		public static readonly sfloat ToiSlop = (sfloat)8.0f * LinearSlop;
 
 		/// <summary>
 		/// Maximum number of contacts to be handled to solve a TOI island.
@@ -92,88 +93,88 @@ namespace Box2DX.Common
 		/// A velocity threshold for elastic collisions. Any collision with a relative linear
 		/// velocity below this threshold will be treated as inelastic.
 		/// </summary>
-		public static readonly float VelocityThreshold = 1.0f; // 1 m/s
+		public static readonly sfloat VelocityThreshold = sfloat.One; // 1 m/s
 
 		/// <summary>
 		/// The maximum linear position correction used when solving constraints.
 		/// This helps to prevent overshoot.
 		/// </summary>
-		public static readonly float MaxLinearCorrection = 0.2f; // 20 cm
+		public static readonly sfloat MaxLinearCorrection = (sfloat)0.2f; // 20 cm
 
 		/// <summary>
 		/// The maximum angular position correction used when solving constraints.
 		/// This helps to prevent overshoot.
 		/// </summary>
-		public static readonly float MaxAngularCorrection = 8.0f / 180.0f * Pi; // 8 degrees
+		public static readonly sfloat MaxAngularCorrection = (sfloat)8.0f / (sfloat)180.0f * Pi; // 8 degrees
 
 		/// <summary>
 		/// The maximum linear velocity of a body. This limit is very large and is used
 		/// to prevent numerical problems. You shouldn't need to adjust this.
 		/// </summary>
-#if TARGET_FLOAT32_IS_FIXED
-		public static readonly float MaxLinearVelocity = 100.0f;
+#if TARGET_sfloat32_IS_FIXED
+		public static readonly sfloat MaxLinearVelocity = (sfloat)100.0f;
 #else
-		public static readonly float MaxLinearVelocity = 200.0f;
-		public static readonly float MaxLinearVelocitySquared = MaxLinearVelocity * MaxLinearVelocity;
+		public static readonly sfloat MaxLinearVelocity = (sfloat)200.0f;
+		public static readonly sfloat MaxLinearVelocitySquared = MaxLinearVelocity * MaxLinearVelocity;
 #endif
 		/// <summary>
 		/// The maximum angular velocity of a body. This limit is very large and is used
 		/// to prevent numerical problems. You shouldn't need to adjust this.
 		/// </summary>
-		public static readonly float MaxAngularVelocity = 250.0f;
-#if !TARGET_FLOAT32_IS_FIXED
-		public static readonly float MaxAngularVelocitySquared = MaxAngularVelocity * MaxAngularVelocity;
+		public static readonly sfloat MaxAngularVelocity = (sfloat)250.0f;
+#if !TARGET_sfloat32_IS_FIXED
+		public static readonly sfloat MaxAngularVelocitySquared = MaxAngularVelocity * MaxAngularVelocity;
 #endif
 
 		/// <summary>
 		/// The maximum linear velocity of a body. This limit is very large and is used
 		/// to prevent numerical problems. You shouldn't need to adjust this.
 		/// </summary>
-		public static readonly float MaxTranslation = 2.0f;
-		public static readonly float MaxTranslationSquared = (MaxTranslation * MaxTranslation);
+		public static readonly sfloat MaxTranslation = (sfloat)2.0f;
+		public static readonly sfloat MaxTranslationSquared = (MaxTranslation * MaxTranslation);
 
 		/// <summary>
 		/// The maximum angular velocity of a body. This limit is very large and is used
 		/// to prevent numerical problems. You shouldn't need to adjust this.
 		/// </summary>
-		public static readonly float MaxRotation = (0.5f * Pi);
-		public static readonly float MaxRotationSquared = (MaxRotation * MaxRotation);
+		public static readonly sfloat MaxRotation = ((sfloat)0.5f * Pi);
+		public static readonly sfloat MaxRotationSquared = (MaxRotation * MaxRotation);
 
 		/// <summary>
 		/// This scale factor controls how fast overlap is resolved. Ideally this would be 1 so
 		/// that overlap is removed in one time step. However using values close to 1 often lead to overshoot.
 		/// </summary>
-		public static readonly float ContactBaumgarte = 0.2f;
+		public static readonly sfloat ContactBaumgarte = (sfloat)0.2f;
 
 		// Sleep
 
 		/// <summary>
 		/// The time that a body must be still before it will go to sleep.
 		/// </summary>
-		public static readonly float TimeToSleep = 0.5f; // half a second
+		public static readonly sfloat TimeToSleep = (sfloat)0.5f; // half a second
 
 		/// <summary>
 		/// A body cannot sleep if its linear velocity is above this tolerance.
 		/// </summary>
-		public static readonly float LinearSleepTolerance = 0.01f; // 1 cm/s
+		public static readonly sfloat LinearSleepTolerance = (sfloat)0.01f; // 1 cm/s
 
 		/// <summary>
 		/// A body cannot sleep if its angular velocity is above this tolerance.
 		/// </summary>
-		public static readonly float AngularSleepTolerance = 2.0f / 180.0f; // 2 degrees/s
+		public static readonly sfloat AngularSleepTolerance = (sfloat)2.0f / (sfloat)180.0f; // 2 degrees/s
 
 		/// <summary>
 		/// Friction mixing law. Feel free to customize this.
 		/// </summary>
-		public static float MixFriction(float friction1, float friction2)
+		public static sfloat MixFriction(sfloat friction1, sfloat friction2)
 		{
-			return (float)System.Math.Sqrt(friction1 * friction2);
+			return (sfloat)libm.sqrtf(friction1 * friction2);
 		}
 
 		/// <summary>
 		/// Restitution mixing law. Feel free to customize this.
 		/// </summary>
-		public static float MixRestitution(float restitution1, float restitution2)
+		public static sfloat MixRestitution(sfloat restitution1, sfloat restitution2)
 		{
 			return restitution1 > restitution2 ? restitution1 : restitution2;
 		}

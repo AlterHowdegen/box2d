@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Text;
 using Box2DX.Collision;
 using Box2DX.Common;
-
+using SoftFloat;
 using UnityEngine;
 using Transform = Box2DX.Common.Transform;
 
@@ -67,9 +67,9 @@ namespace Box2DX.Dynamics
 		{
 			Type = ShapeType.UnknownShape;
 			UserData = null;
-			Friction = 0.2f;
-			Restitution = 0.0f;
-			Density = 0.0f;
+			Friction = (sfloat)0.2f;
+			Restitution = sfloat.Zero;
+			Density = sfloat.Zero;
 			Filter.CategoryBits = 0x0001;
 			Filter.MaskBits = 0xFFFF;
 			Filter.GroupIndex = 0;
@@ -89,17 +89,17 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// The friction coefficient, usually in the range [0,1].
 		/// </summary>
-		public float Friction;
+		public sfloat Friction;
 
 		/// <summary>
 		/// The restitution (elasticity) usually in the range [0,1].
 		/// </summary>
-		public float Restitution;
+		public sfloat Restitution;
 
 		/// <summary>
 		/// The density, usually in kg/m^2.
 		/// </summary>
-		public float Density;
+		public sfloat Density;
 
 		/// <summary>
 		/// A sensor shape collects contact information but never generates a collision response.
@@ -117,14 +117,14 @@ namespace Box2DX.Dynamics
 	/// </summary>
 	public class CircleDef : FixtureDef
 	{
-		public Vector2 LocalPosition;
-		public float Radius;
+		public sVector2 LocalPosition;
+		public sfloat Radius;
 
 		public CircleDef()
 		{
 			Type = ShapeType.CircleShape;
-			LocalPosition = Vector2.zero;
-			Radius = 1.0f;
+			LocalPosition = sVector2.zero;
+			Radius = sfloat.One;
 		}
 	}
 
@@ -143,7 +143,7 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// The polygon vertices in local coordinates.
 		/// </summary>
-		public Vector2[] Vertices = new Vector2[Settings.MaxPolygonVertices];
+		public sVector2[] Vertices = new sVector2[Settings.MaxPolygonVertices];
 
 		public PolygonDef()
 		{
@@ -156,13 +156,13 @@ namespace Box2DX.Dynamics
 		/// </summary>
 		/// <param name="hx">The half-width</param>
 		/// <param name="hy">The half-height.</param>
-		public void SetAsBox(float hx, float hy)
+		public void SetAsBox(sfloat hx, sfloat hy)
 		{
 			VertexCount = 4;
-			Vertices[0] = new Vector2(-hx, -hy);
-			Vertices[1] = new Vector2(hx, -hy);
-			Vertices[2] = new Vector2(hx, hy);
-			Vertices[3] = new Vector2(-hx, hy);
+			Vertices[0] = new sVector2(-hx, -hy);
+			Vertices[1] = new sVector2(hx, -hy);
+			Vertices[2] = new sVector2(hx, hy);
+			Vertices[3] = new sVector2(-hx, hy);
 		}
 
 
@@ -173,7 +173,7 @@ namespace Box2DX.Dynamics
 		/// <param name="hy">The half-height.</param>
 		/// <param name="center">The center of the box in local coordinates.</param>
 		/// <param name="angle">The rotation of the box in local coordinates.</param>
-		public void SetAsBox(float hx, float hy, Vector2 center, float angle)
+		public void SetAsBox(sfloat hx, sfloat hy, sVector2 center, sfloat angle)
 		{
 			SetAsBox(hx, hy);
 
@@ -204,12 +204,12 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// The start vertex.
 		/// </summary>
-		public Vector2 Vertex1;
+		public sVector2 Vertex1;
 
 		/// <summary>
 		/// The end vertex.
 		/// </summary>
-		public Vector2 Vertex2;
+		public sVector2 Vertex2;
 	}
 
 	/// <summary>
@@ -270,17 +270,17 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Friction coefficient, usually in the range [0,1].
 		/// </summary>
-		public float Friction;
+		public sfloat Friction;
 
 		/// <summary>
 		/// Restitution (elasticity) usually in the range [0,1].
 		/// </summary>
-		public float Restitution;
+		public sfloat Restitution;
 
 		/// <summary>
 		/// Density, usually in kg/m^2.
 		/// </summary>
-		public float Density;
+		public sfloat Density;
 
 		public Fixture()
 		{
@@ -445,7 +445,7 @@ namespace Box2DX.Dynamics
 		/// <param name="offset">Offset the surface offset along normal.</param>
 		/// <param name="c">Returns the centroid.</param>
 		/// <returns>The total volume less than offset along normal.</returns>
-		public float ComputeSubmergedArea(Vector2 normal, float offset, out Vector2 c)
+		public sfloat ComputeSubmergedArea(sVector2 normal, sfloat offset, out sVector2 c)
 		{
 			return _shape.ComputeSubmergedArea(normal, offset, _body.GetTransform(), out c);
 		}
@@ -454,7 +454,7 @@ namespace Box2DX.Dynamics
 		/// Test a point for containment in this fixture. This only works for convex shapes.
 		/// </summary>
 		/// <param name="p">A point in world coordinates.</param>
-		public bool TestPoint(Vector2 p)
+		public bool TestPoint(sVector2 p)
 		{
 			return _shape.TestPoint(_body.GetTransform(), p);
 		}
@@ -468,7 +468,7 @@ namespace Box2DX.Dynamics
 		/// is not set.</param>
 		/// <param name="segment">Defines the begin and end point of the ray cast.</param>
 		/// <param name="maxLambda">A number typically in the range [0,1].</param>
-		public SegmentCollide TestSegment(out float lambda, out Vector2 normal, Segment segment, float maxLambda)
+		public SegmentCollide TestSegment(out sfloat lambda, out sVector2 normal, Segment segment, sfloat maxLambda)
 		{
 			return _shape.TestSegment(_body.GetTransform(), out lambda, out normal, segment, maxLambda);
 		}
@@ -476,7 +476,7 @@ namespace Box2DX.Dynamics
 		/// <summary>
 		/// Get the maximum radius about the parent body's center of mass.
 		/// </summary>
-		public float ComputeSweepRadius(Vector2 pivot)
+		public sfloat ComputeSweepRadius(sVector2 pivot)
 		{
 			return _shape.ComputeSweepRadius(pivot);
 		}

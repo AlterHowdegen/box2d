@@ -22,58 +22,59 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using SoftFloat;
 using UnityEngine;
 
 using Random = UnityEngine.Random;
 
 namespace Box2DX.Common
 {
-	public static class Vector2Extension 
+	public static class sVector2Extension 
 	{	
-		public static Vector3 ToVector3(this Vector2 vector) 
-		{ 
-			return new Vector3(vector.x, vector.y, 0.0f);
-		}
+		// public static Vector3 ToVector3(this sVector2 vector) 
+		// { 
+		// 	return new Vector3(vector.x, vector.y, 0.0f);
+		// }
 		
-		public static bool IsValid(this Vector2 vector)
+		public static bool IsValid(this sVector2 vector)
 		{
 			return Math.IsValid(vector.x) && Math.IsValid(vector.y);
 		}
 		
-		public static float Cross(this Vector2 vector, Vector2 other) 
+		public static sfloat Cross(this sVector2 vector, sVector2 other) 
 		{ 
 			return vector.x * other.y - vector.y * other.x;
 		}
 		
-		public static Vector2 CrossScalarPostMultiply(this Vector2 vector, float s) 
+		public static sVector2 CrossScalarPostMultiply(this sVector2 vector, sfloat s) 
 		{ 
-			return new Vector2(s * vector.y, -s * vector.x);
+			return new sVector2(s * vector.y, -s * vector.x);
 		}
 		
-		public static Vector2 CrossScalarPreMultiply(this Vector2 vector, float s)
+		public static sVector2 CrossScalarPreMultiply(this sVector2 vector, sfloat s)
 		{
-			return new Vector2(-s * vector.y, s * vector.x);
+			return new sVector2(-s * vector.y, s * vector.x);
 		}
 		
-		public static Vector2 Abs(this Vector2 vector) { 
-			return new Vector2(Mathf.Abs(vector.x), Mathf.Abs(vector.y));
+		public static sVector2 Abs(this sVector2 vector) { 
+			return new sVector2(sfloat.Abs(vector.x), sfloat.Abs(vector.y));
 		}
 	}
 	
 	public static class Vector3Extension 
 	{ 
-		public static Vector2 ToVector2(this Vector3 vector) 
+		public static sVector2 TosVector2(this Vector3 vector) 
 		{
-			return new Vector2(vector.x, vector.y);
+			return new sVector2(vector.x, vector.y);
 		}
 	}
 	
 	public static class QuaternionExtension 
 	{
-		public static Quaternion FromAngle2D(float radians) 
-		{ 
-			return Quaternion.AngleAxis(radians * Mathf.Rad2Deg, Vector3.forward);
-		}
+		// public static Quaternion FromAngle2D(sfloat radians) 
+		// { 
+		// 	return Quaternion.AngleAxis(radians * libm.Rad2Deg, Vector3.forward);
+		// }
 	}
 	
 	public class Math
@@ -83,19 +84,19 @@ namespace Box2DX.Common
 		public static readonly int RAND_LIMIT = 32767;
 
 		/// <summary>
-		/// This function is used to ensure that a floating point number is
+		/// This function is used to ensure that a sfloating point number is
 		/// not a NaN or infinity.
 		/// </summary>
-		public static bool IsValid(float x)
+		public static bool IsValid(sfloat x)
 		{
-			return !(float.IsNaN(x) || float.IsNegativeInfinity(x) || float.IsPositiveInfinity(x));
+			return !(x.IsNaN() || x.IsNegativeInfinity() || x.IsPositiveInfinity());
 		}
 
 		[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Explicit)]
 		public struct Convert
 		{
 			[System.Runtime.InteropServices.FieldOffset(0)]
-			public float x;
+			public sfloat x;
 
 			[System.Runtime.InteropServices.FieldOffset(0)]
 			public int i;
@@ -103,12 +104,12 @@ namespace Box2DX.Common
 	
 
 #if USE_MATRIX_FOR_ROTATION
-	 	public static Mat22 AngleToRotation(float angle) 
+	 	public static Mat22 AngleToRotation(sfloat angle) 
 		{
 			return new Mat22(angle);
 		}
 #else
-		public static Quaternion AngleToRotation(float angle)
+		public static Quaternion AngleToRotation(sfloat angle)
 		{
 			return QuaternionExtension.FromAngle2D(angle);
 		}
@@ -117,24 +118,24 @@ namespace Box2DX.Common
 		/// <summary>
 		/// This is a approximate yet fast inverse square-root.
 		/// </summary>
-		public static float InvSqrt(float x)
+		public static sfloat InvSqrt(sfloat x)
 		{
 			Convert convert = new Convert();
 			convert.x = x;
-			float xhalf = 0.5f * x;
+			sfloat xhalf = (sfloat)0.5f * x;
 			convert.i = 0x5f3759df - (convert.i >> 1);
 			x = convert.x;
-			x = x * (1.5f - xhalf * x * x);
+			x = x * ((sfloat)1.5f - xhalf * x * x);
 			return x;
 		}
 
-		public static float Sqrt(float x)
+		public static sfloat Sqrt(sfloat x)
 		{
-			return Mathf.Sqrt(x);
+			return libm.sqrtf(x);
 		}
 		
 		/// <summary>
-		/// Random floating point number in range [lo, hi]
+		/// Random sfloating point number in range [lo, hi]
 		/// </summary>
 
 		/// <summary>
@@ -160,14 +161,14 @@ namespace Box2DX.Common
 			return result;
 		}
 
-		public static float Abs(float a)
+		public static sfloat Abs(sfloat a)
 		{
-			return a > 0.0f ? a : -a;
+			return a > sfloat.Zero ? a : -a;
 		}
 
-		public static Vector2 Abs(Vector2 a)
+		public static sVector2 Abs(sVector2 a)
 		{
-			return new Vector2(Mathf.Abs(a.x), Mathf.Abs(a.y));
+			return new sVector2(sfloat.Abs(a.x), sfloat.Abs(a.y));
 		}
 
 		public static Mat22 Abs(Mat22 A)
@@ -177,7 +178,7 @@ namespace Box2DX.Common
 			return B;
 		}
 
-		public static float Min(float a, float b)
+		public static sfloat Min(sfloat a, sfloat b)
 		{
 			return a < b ? a : b;
 		}
@@ -187,7 +188,7 @@ namespace Box2DX.Common
 			return a < b ? a : b;
 		}
 
-		public static float Max(float a, float b)
+		public static sfloat Max(sfloat a, sfloat b)
 		{
 			return a > b ? a : b;
 		}
@@ -197,9 +198,9 @@ namespace Box2DX.Common
 			return a > b ? a : b;
 		}
 
-		public static Vector2 Clamp(Vector2 a, Vector2 low, Vector2 high)
+		public static sVector2 Clamp(sVector2 a, sVector2 low, sVector2 high)
 		{
-			return Vector2.Max(low, Vector2.Min(a, high));
+			return sVector2.Max(low, sVector2.Min(a, high));
 		}
 
 		public static void Swap<T>(ref T a, ref T b)
@@ -213,18 +214,18 @@ namespace Box2DX.Common
 		/// Multiply a matrix times a vector. If a rotation matrix is provided,
 		/// then this Transforms the vector from one frame to another.
 		/// </summary>
-		public static Vector2 Mul(Mat22 A, Vector2 v)
+		public static sVector2 Mul(Mat22 A, sVector2 v)
 		{
-			return new Vector2(A.Col1.x * v.x + A.Col2.x * v.y, A.Col1.y * v.x + A.Col2.y * v.y);
+			return new sVector2(A.Col1.x * v.x + A.Col2.x * v.y, A.Col1.y * v.x + A.Col2.y * v.y);
 		}
 
 		/// <summary>
 		/// Multiply a matrix transpose times a vector. If a rotation matrix is provided,
 		/// then this Transforms the vector from one frame to another (inverse Transform).
 		/// </summary>
-		public static Vector2 MulT(Mat22 A, Vector2 v)
+		public static sVector2 MulT(Mat22 A, sVector2 v)
 		{
-			return new Vector2(Vector2.Dot(v, A.Col1), Vector2.Dot(v, A.Col2));
+			return new sVector2(sVector2.Dot(v, A.Col1), sVector2.Dot(v, A.Col2));
 		}
 
 		/// <summary>
@@ -242,12 +243,12 @@ namespace Box2DX.Common
 		/// </summary>
 		public static Mat22 MulT(Mat22 A, Mat22 B)
 		{
-			Vector2 c1 = new Vector2(Vector2.Dot(A.Col1, B.Col1), Vector2.Dot(A.Col2, B.Col1));
-			Vector2 c2 = new Vector2(Vector2.Dot(A.Col1, B.Col2), Vector2.Dot(A.Col2, B.Col2));
+			sVector2 c1 = new sVector2(sVector2.Dot(A.Col1, B.Col1), sVector2.Dot(A.Col2, B.Col1));
+			sVector2 c2 = new sVector2(sVector2.Dot(A.Col1, B.Col2), sVector2.Dot(A.Col2, B.Col2));
 			return new Mat22(c1, c2);
 		}
 	
-		public static Vector2 Mul(Transform T, Vector2 v)
+		public static sVector2 Mul(Transform T, sVector2 v)
 		{
 #if USE_MATRIX_FOR_ROTATION
 			return T.position + Math.Mul(T.rotation, v);
@@ -256,7 +257,7 @@ namespace Box2DX.Common
 #endif
 		}
 
-		public static Vector2 MulT(Transform T, Vector2 v)
+		public static sVector2 MulT(Transform T, sVector2 v)
 		{
 #if USE_MATRIX_FOR_ROTATION
 			return Math.MulT(T.rotation, v - T.position);
@@ -273,9 +274,9 @@ namespace Box2DX.Common
 			return v.x * A.Col1 + v.y * A.Col2 + v.z * A.Col3;
 		}
 
-		public static float Atan2(float y, float x)
+		public static sfloat Atan2(sfloat y, sfloat x)
 		{
-			return (float)System.Math.Atan2(y, x);
+			return (sfloat)libm.atan2f(y, x);
 		}
 	}
 }

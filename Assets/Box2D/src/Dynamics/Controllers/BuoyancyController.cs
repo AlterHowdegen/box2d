@@ -1,4 +1,5 @@
 ﻿using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Dynamics.Controllers
@@ -9,35 +10,35 @@ namespace Box2DX.Dynamics.Controllers
     public class BuoyancyControllerDef
     {
         /// The outer surface normal
-        public Vector2 Normal;
+        public sVector2 Normal;
         /// The height of the fluid surface along the normal
-        public float Offset;
+        public sfloat Offset;
         /// The fluid density
-        public float Density;
+        public sfloat Density;
         /// Fluid velocity, for drag calculations
-        public Vector2 Velocity;
+        public sVector2 Velocity;
         /// Linear drag co-efficient
-        public float LinearDrag;
+        public sfloat LinearDrag;
         /// Linear drag co-efficient
-        public float AngularDrag;
+        public sfloat AngularDrag;
         /// If false, bodies are assumed to be uniformly dense, otherwise use the shapes densities
         public bool UseDensity; //False by default to prevent a gotcha
         /// If true, gravity is taken from the world instead of the gravity parameter.
         public bool UseWorldGravity;
         /// Gravity vector, if the world's gravity is not used
-        public Vector2 Gravity;
+        public sVector2 Gravity;
 
         public BuoyancyControllerDef()
         {
-            Normal = new Vector2(0, 1);
-            Offset = 0;
-            Density = 0;
-            Velocity = Vector2.zero;
-            LinearDrag = 0;
-            AngularDrag = 0;
+            Normal = new sVector2(sfloat.Zero, sfloat.One);
+            Offset = sfloat.Zero;
+            Density = sfloat.Zero;
+            Velocity = sVector2.zero;
+            LinearDrag = sfloat.Zero;
+            AngularDrag = sfloat.Zero;
             UseDensity = false;
             UseWorldGravity = true;
-            Gravity =  Vector2.zero;
+            Gravity =  sVector2.zero;
         }
     }
 
@@ -47,23 +48,23 @@ namespace Box2DX.Dynamics.Controllers
     public class BuoyancyController : Controller
     {
         /// The outer surface normal
-        public Vector2 Normal;
+        public sVector2 Normal;
         /// The height of the fluid surface along the normal
-        public float Offset;
+        public sfloat Offset;
         /// The fluid density
-        public float Density;
+        public sfloat Density;
         /// Fluid velocity, for drag calculations
-        public Vector2 Velocity;
+        public sVector2 Velocity;
         /// Linear drag co-efficient
-        public float LinearDrag;
+        public sfloat LinearDrag;
         /// Linear drag co-efficient
-        public float AngularDrag;
+        public sfloat AngularDrag;
         /// If false, bodies are assumed to be uniformly dense, otherwise use the shapes densities
         public bool UseDensity; //False by default to prevent a gotcha
         /// If true, gravity is taken from the world instead of the gravity parameter.
         public bool UseWorldGravity;
         /// Gravity vector, if the world's gravity is not used
-        public Vector2 Gravity;
+        public sVector2 Gravity;
 
         public BuoyancyController(BuoyancyControllerDef buoyancyControllerDef)
         {
@@ -97,18 +98,18 @@ namespace Box2DX.Dynamics.Controllers
                     //so unlike most forces, it is safe to ignore sleeping bodes
                     continue;
                 }
-                Vector2 areac = Vector2.zero; 
-                Vector2 massc = Vector2.zero;
-                float area = 0;
-                float mass = 0;
+                sVector2 areac = sVector2.zero; 
+                sVector2 massc = sVector2.zero;
+                sfloat area = sfloat.Zero;
+                sfloat mass = sfloat.Zero;
                 for (Fixture shape = body.GetFixtureList(); shape != null; shape = shape.Next)
                 {
-                    Vector2 sc;
-                    float sarea = shape.ComputeSubmergedArea(Normal, Offset, out sc);
+                    sVector2 sc;
+                    sfloat sarea = shape.ComputeSubmergedArea(Normal, Offset, out sc);
                     area += sarea;
                     areac.x += sarea * sc.x;
                     areac.y += sarea * sc.y;
-                    float shapeDensity = 0;
+                    sfloat shapeDensity = sfloat.Zero;
                     if (UseDensity)
                     {
                         //TODO: Expose density publicly
@@ -116,7 +117,7 @@ namespace Box2DX.Dynamics.Controllers
                     }
                     else
                     {
-                        shapeDensity = 1;
+                        shapeDensity = sfloat.One;
                     }
                     mass += sarea * shapeDensity;
                     massc.x += sarea * sc.x * shapeDensity;
@@ -130,10 +131,10 @@ namespace Box2DX.Dynamics.Controllers
                 if (area < Settings.FLT_EPSILON)
                     continue;
                 //Buoyancy
-                Vector2 buoyancyForce = -Density * area * Gravity;
+                sVector2 buoyancyForce = -Density * area * Gravity;
                 body.ApplyForce(buoyancyForce, massc);
                 //Linear drag
-                Vector2 dragForce = body.GetLinearVelocityFromWorldPoint(areac) - Velocity;
+                sVector2 dragForce = body.GetLinearVelocityFromWorldPoint(areac) - Velocity;
                 dragForce *= -LinearDrag * area;
                 body.ApplyForce(dragForce, areac);
                 //Angular drag
@@ -145,11 +146,11 @@ namespace Box2DX.Dynamics.Controllers
 
         public override void Draw(DebugDraw debugDraw)
         {
-            float r = 1000;
-            Vector2 p1 = Offset * Normal + Normal.CrossScalarPostMultiply(r);
-            Vector2 p2 = Offset * Normal - Normal.CrossScalarPostMultiply(r);
+            sfloat r = (sfloat)1000;
+            sVector2 p1 = Offset * Normal + Normal.CrossScalarPostMultiply(r);
+            sVector2 p2 = Offset * Normal - Normal.CrossScalarPostMultiply(r);
 
-            Color color = new Color(0, 0, 0.8f);
+            Color color = new Color(0.0f, 0.0f, 0.8f);
 
             debugDraw.DrawSegment(p1, p2, color);
         }

@@ -20,6 +20,7 @@
 */
 
 using Box2DX.Common;
+using SoftFloat;
 using UnityEngine;
 
 using Transform = Box2DX.Common.Transform;
@@ -31,27 +32,27 @@ namespace Box2DX.Collision
 		/// <summary>
 		/// Find the separation between poly1 and poly2 for a give edge normal on poly1.
 		/// </summary>
-		public static float EdgeSeparation(PolygonShape poly1, Transform xf1, int edge1, PolygonShape poly2, Transform xf2)
+		public static sfloat EdgeSeparation(PolygonShape poly1, Transform xf1, int edge1, PolygonShape poly2, Transform xf2)
 		{
 			int count1 = poly1._vertexCount;
-			Vector2[] vertices1 = poly1._vertices;
-			Vector2[] normals1 = poly1._normals;
+			sVector2[] vertices1 = poly1._vertices;
+			sVector2[] normals1 = poly1._normals;
 
 			int count2 = poly2._vertexCount;
-			Vector2[] vertices2 = poly2._vertices;
+			sVector2[] vertices2 = poly2._vertices;
 
 			Box2DXDebug.Assert(0 <= edge1 && edge1 < count1);
 
 			// Convert normal from poly1's frame into poly2's frame.
-			Vector2 normal1World = xf1.TransformDirection(normals1[edge1]);
-			Vector2 normal1 = xf2.InverseTransformDirection(normal1World);
+			sVector2 normal1World = xf1.TransformDirection(normals1[edge1]);
+			sVector2 normal1 = xf2.InverseTransformDirection(normal1World);
 
 			// Find support vertex on poly2 for -normal.
 			int index = 0;
-			float minDot = Common.Settings.FLT_MAX;
+			sfloat minDot = Common.Settings.FLT_MAX;
 			for (int i = 0; i < count2; ++i)
 			{
-				float dot = Vector2.Dot(vertices2[i], normal1);
+				sfloat dot = sVector2.Dot(vertices2[i], normal1);
 				if (dot < minDot)
 				{
 					minDot = dot;
@@ -59,30 +60,30 @@ namespace Box2DX.Collision
 				}
 			}
 
-			Vector2 v1 = xf1.TransformPoint(vertices1[edge1]);
-			Vector2 v2 = xf2.TransformPoint(vertices2[index]); 
-			float separation = Vector2.Dot(v2 - v1, normal1World);
+			sVector2 v1 = xf1.TransformPoint(vertices1[edge1]);
+			sVector2 v2 = xf2.TransformPoint(vertices2[index]); 
+			sfloat separation = sVector2.Dot(v2 - v1, normal1World);
 			return separation;
 		}
 
 		/// <summary>
 		/// Find the max separation between poly1 and poly2 using edge normals from poly1.
 		/// </summary>
-		public static float FindMaxSeparation(ref int edgeIndex, PolygonShape poly1, Transform xf1, PolygonShape poly2, Transform xf2)
+		public static sfloat FindMaxSeparation(ref int edgeIndex, PolygonShape poly1, Transform xf1, PolygonShape poly2, Transform xf2)
 		{
 			int count1 = poly1._vertexCount;
-			Vector2[] normals1 = poly1._normals;
+			sVector2[] normals1 = poly1._normals;
 
 			// Vector pointing from the centroid of poly1 to the centroid of poly2.
-			Vector2 d = xf2.TransformPoint(poly2._centroid) - xf1.TransformPoint(poly2._centroid);
-			Vector2 dLocal1 = xf1.InverseTransformDirection(d);
+			sVector2 d = xf2.TransformPoint(poly2._centroid) - xf1.TransformPoint(poly2._centroid);
+			sVector2 dLocal1 = xf1.InverseTransformDirection(d);
 
 			// Find edge normal on poly1 that has the largest projection onto d.
 			int edge = 0;
-			float maxDot = -Common.Settings.FLT_MAX;
+			sfloat maxDot = -Common.Settings.FLT_MAX;
 			for (int i = 0; i < count1; ++i)
 			{
-				float dot = Vector2.Dot(normals1[i], dLocal1);
+				sfloat dot = sVector2.Dot(normals1[i], dLocal1);
 				if (dot > maxDot)
 				{
 					maxDot = dot;
@@ -91,19 +92,19 @@ namespace Box2DX.Collision
 			}
 
 			// Get the separation for the edge normal.
-			float s = Collision.EdgeSeparation(poly1, xf1, edge, poly2, xf2);
+			sfloat s = Collision.EdgeSeparation(poly1, xf1, edge, poly2, xf2);
 
 			// Check the separation for the previous edge normal.
 			int prevEdge = edge - 1 >= 0 ? edge - 1 : count1 - 1;
-			float sPrev = Collision.EdgeSeparation(poly1, xf1, prevEdge, poly2, xf2);
+			sfloat sPrev = Collision.EdgeSeparation(poly1, xf1, prevEdge, poly2, xf2);
 
 			// Check the separation for the next edge normal.
 			int nextEdge = edge + 1 < count1 ? edge + 1 : 0;
-			float sNext = Collision.EdgeSeparation(poly1, xf1, nextEdge, poly2, xf2);
+			sfloat sNext = Collision.EdgeSeparation(poly1, xf1, nextEdge, poly2, xf2);
 
 			// Find the best edge and the search direction.
 			int bestEdge;
-			float bestSeparation;
+			sfloat bestSeparation;
 			int increment;
 			if (sPrev > s && sPrev > sNext)
 			{
@@ -151,23 +152,23 @@ namespace Box2DX.Collision
 		public static void FindIncidentEdge(out ClipVertex[] c, PolygonShape poly1, Transform xf1, int edge1, PolygonShape poly2, Transform xf2)
 		{
 			int count1 = poly1._vertexCount;
-			Vector2[] normals1 = poly1._normals;
+			sVector2[] normals1 = poly1._normals;
 
 			int count2 = poly2._vertexCount;
-			Vector2[] vertices2 = poly2._vertices;
-			Vector2[] normals2 = poly2._normals;
+			sVector2[] vertices2 = poly2._vertices;
+			sVector2[] normals2 = poly2._normals;
 
 			Box2DXDebug.Assert(0 <= edge1 && edge1 < count1);
 
 			// Get the normal of the reference edge in poly2's frame.
-			Vector2 normal1 = xf2.InverseTransformDirection( xf1.TransformDirection(normals1[edge1]) );
+			sVector2 normal1 = xf2.InverseTransformDirection( xf1.TransformDirection(normals1[edge1]) );
 
 			// Find the incident edge on poly2.
 			int index = 0;
-			float minDot = Settings.FLT_MAX;
+			sfloat minDot = Settings.FLT_MAX;
 			for (int i = 0; i < count2; ++i)
 			{
-				float dot = Vector2.Dot(normal1, normals2[i]);
+				sfloat dot = sVector2.Dot(normal1, normals2[i]);
 				if (dot < minDot)
 				{
 					minDot = dot;
@@ -202,15 +203,15 @@ namespace Box2DX.Collision
 			PolygonShape polyA, Transform xfA, PolygonShape polyB, Transform xfB)
 		{
 			manifold.PointCount = 0;
-			float totalRadius = polyA._radius + polyB._radius;
+			sfloat totalRadius = polyA._radius + polyB._radius;
 
 			int edgeA = 0;
-			float separationA = Collision.FindMaxSeparation(ref edgeA, polyA, xfA, polyB, xfB);
+			sfloat separationA = Collision.FindMaxSeparation(ref edgeA, polyA, xfA, polyB, xfB);
 			if (separationA > totalRadius)
 				return;
 
 			int edgeB = 0;
-			float separationB = Collision.FindMaxSeparation(ref edgeB, polyB, xfB, polyA, xfA);
+			sfloat separationB = Collision.FindMaxSeparation(ref edgeB, polyB, xfB, polyA, xfA);
 			if (separationB > totalRadius)
 				return;
 
@@ -219,8 +220,8 @@ namespace Box2DX.Collision
 			Transform xf1, xf2;
 			int edge1;		// reference edge
 			byte flip;
-			const float k_relativeTol = 0.98f;
-			const float k_absoluteTol = 0.001f;
+			sfloat k_relativeTol = (sfloat)0.98f;
+			sfloat k_absoluteTol = (sfloat)0.001f;
 
 			if (separationB > k_relativeTol * separationA + k_absoluteTol)
 			{
@@ -247,27 +248,27 @@ namespace Box2DX.Collision
 			Collision.FindIncidentEdge(out incidentEdge, poly1, xf1, edge1, poly2, xf2);
 
 			int count1 = poly1._vertexCount;
-			Vector2[] vertices1 = poly1._vertices;
+			sVector2[] vertices1 = poly1._vertices;
 
-			Vector2 v11 = vertices1[edge1];
-			Vector2 v12 = edge1 + 1 < count1 ? vertices1[edge1 + 1] : vertices1[0];
+			sVector2 v11 = vertices1[edge1];
+			sVector2 v12 = edge1 + 1 < count1 ? vertices1[edge1 + 1] : vertices1[0];
 
-			Vector2 dv = v12 - v11;
+			sVector2 dv = v12 - v11;
 
-			Vector2 localNormal = dv.CrossScalarPostMultiply(1.0f);
+			sVector2 localNormal = dv.CrossScalarPostMultiply(sfloat.One);
 			localNormal.Normalize();
-			Vector2 planePoint = 0.5f * (v11 + v12);
+			sVector2 planePoint = (sfloat)0.5f * (v11 + v12);
 
-			Vector2 sideNormal = xf1.TransformDirection(v12 - v11);
+			sVector2 sideNormal = xf1.TransformDirection(v12 - v11);
 			sideNormal.Normalize();
-			Vector2 frontNormal = sideNormal.CrossScalarPostMultiply(1.0f);
+			sVector2 frontNormal = sideNormal.CrossScalarPostMultiply(sfloat.One);
 
 			v11 = Common.Math.Mul(xf1, v11);
 			v12 = Common.Math.Mul(xf1, v12);
 
-			float frontOffset = Vector2.Dot(frontNormal, v11);
-			float sideOffset1 = -Vector2.Dot(sideNormal, v11);
-			float sideOffset2 = Vector2.Dot(sideNormal, v12);
+			sfloat frontOffset = sVector2.Dot(frontNormal, v11);
+			sfloat sideOffset1 = -sVector2.Dot(sideNormal, v11);
+			sfloat sideOffset2 = sVector2.Dot(sideNormal, v12);
 
 			// Clip incident edge against extruded edge1 side edges.
 			ClipVertex[] clipPoints1;
@@ -293,7 +294,7 @@ namespace Box2DX.Collision
 			int pointCount = 0;
 			for (int i = 0; i < Settings.MaxManifoldPoints; ++i)
 			{
-				float separation = Vector2.Dot(frontNormal, clipPoints2[i].V) - frontOffset;
+				sfloat separation = sVector2.Dot(frontNormal, clipPoints2[i].V) - frontOffset;
 
 				if (separation <= totalRadius)
 				{

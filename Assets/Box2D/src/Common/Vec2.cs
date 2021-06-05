@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using SoftFloat;
 
 namespace Box2DX.Common
 {
@@ -30,9 +31,9 @@ namespace Box2DX.Common
 	/// </summary>
 	public struct Vec2
 	{
-		public float X, Y;
+		public sfloat X, Y;
 
-		public float this[int i]
+		public sfloat this[int i]
 		{
 			get
 			{
@@ -41,7 +42,7 @@ namespace Box2DX.Common
 				else
 				{
 					Box2DXDebug.Assert(false, "Incorrect Vec2 element!");
-					return 0;
+					return sfloat.Zero;
 				}
 			}
 			set
@@ -58,7 +59,7 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Construct using coordinates.
 		/// </summary>
-		public Vec2(float x)
+		public Vec2(sfloat x)
 		{
 			X = x;
 			Y = x;
@@ -67,7 +68,7 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Construct using coordinates.
 		/// </summary>
-		public Vec2(float x, float y)
+		public Vec2(sfloat x, sfloat y)
 		{
 			X = x;
 			Y = y;
@@ -76,28 +77,28 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Set this vector to all zeros.
 		/// </summary>
-		public void SetZero() { X = 0.0f; Y = 0.0f; }
+		public void SetZero() { X = sfloat.Zero; Y = sfloat.Zero; }
 
 		/// <summary>
 		/// Set this vector to some specified coordinates.
 		/// </summary>
-		public void Set(float x, float y) { X = x; Y = y; }
+		public void Set(sfloat x, sfloat y) { X = x; Y = y; }
 
-		public void Set(float xy) { X = xy; Y = xy; }
+		public void Set(sfloat xy) { X = xy; Y = xy; }
 
 		/// <summary>
 		///  Get the length of this vector (the norm).
 		/// </summary>
-		public float Length()
+		public sfloat Length()
 		{
-			return (float)System.Math.Sqrt(X * X + Y * Y);
+			return (sfloat)libm.sqrtf(X * X + Y * Y);
 		}
 
 		/// <summary>
 		/// Get the length squared. For performance, use this instead of
 		/// Length (if possible).
 		/// </summary>
-		public float LengthSquared()
+		public sfloat LengthSquared()
 		{
 			return X * X + Y * Y;
 		}
@@ -105,14 +106,14 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Convert this vector into a unit vector. Returns the length.
 		/// </summary>
-		public float Normalize()
+		public sfloat Normalize()
 		{
-			float length = Length();
+			sfloat length = Length();
 			if (length < Settings.FLT_EPSILON)
 			{
-				return 0.0f;
+				return sfloat.Zero;
 			}
-			float invLength = 1.0f / length;
+			sfloat invLength = sfloat.One / length;
 			X *= invLength;
 			Y *= invLength;
 
@@ -151,14 +152,14 @@ namespace Box2DX.Common
 			return v;
 		}
 
-		public static Vec2 operator *(Vec2 v1, float a)
+		public static Vec2 operator *(Vec2 v1, sfloat a)
 		{
 			Vec2 v = new Vec2();
 			v.Set(v1.X * a, v1.Y * a);
 			return v;
 		}
 
-		public static Vec2 operator *(float a, Vec2 v1)
+		public static Vec2 operator *(sfloat a, Vec2 v1)
 		{
 			Vec2 v = new Vec2();
 			v.Set(v1.X * a, v1.Y * a);
@@ -175,12 +176,12 @@ namespace Box2DX.Common
 			return a.X != b.X || a.Y != b.Y;
 		}
 
-		public static Vec2 Zero { get { return new Vec2(0, 0); } }
+		public static Vec2 Zero { get { return new Vec2(sfloat.Zero, sfloat.Zero); } }
 
 		/// <summary>
 		/// Peform the dot product on two vectors.
 		/// </summary>
-		public static float Dot(Vec2 a, Vec2 b)
+		public static sfloat Dot(Vec2 a, Vec2 b)
 		{
 			return a.X * b.X + a.Y * b.Y;
 		}
@@ -188,7 +189,7 @@ namespace Box2DX.Common
 		/// <summary>
 		/// Perform the cross product on two vectors. In 2D this produces a scalar.
 		/// </summary>
-		public static float Cross(Vec2 a, Vec2 b)
+		public static sfloat Cross(Vec2 a, Vec2 b)
 		{
 			return a.X * b.Y - a.Y * b.X;
 		}
@@ -197,7 +198,7 @@ namespace Box2DX.Common
 		/// Perform the cross product on a vector and a scalar. 
 		/// In 2D this produces a vector.
 		/// </summary>
-		public static Vec2 Cross(Vec2 a, float s)
+		public static Vec2 Cross(Vec2 a, sfloat s)
 		{
 			Vec2 v = new Vec2();
 			v.Set(s * a.Y, -s * a.X);
@@ -208,20 +209,20 @@ namespace Box2DX.Common
 		/// Perform the cross product on a scalar and a vector. 
 		/// In 2D this produces a vector.
 		/// </summary>
-		public static Vec2 Cross(float s, Vec2 a)
+		public static Vec2 Cross(sfloat s, Vec2 a)
 		{
 			Vec2 v = new Vec2();
 			v.Set(-s * a.Y, s * a.X);
 			return v;
 		}
 
-		public static float Distance(Vec2 a, Vec2 b)
+		public static sfloat Distance(Vec2 a, Vec2 b)
 		{
 			Vec2 c = a - b;
 			return c.Length();
 		}
 
-		public static float DistanceSquared(Vec2 a, Vec2 b)
+		public static sfloat DistanceSquared(Vec2 a, Vec2 b)
 		{
 			Vec2 c = a - b;
 			return Vec2.Dot(c, c);

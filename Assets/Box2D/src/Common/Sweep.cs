@@ -24,7 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using SoftFloat;
 using UnityEngine;
 
 namespace Box2DX.Common
@@ -32,20 +32,20 @@ namespace Box2DX.Common
 	[System.Serializable]
 	public struct Sweep
 	{
-		public Vector2 LocalCenter;	//local center of mass position
-		public Vector2 C0, C; //local center of mass position
-		public float A0, A; //world angles
-		public float T0; //time interval = [T0,1], where T0 is in [0,1]
+		public sVector2 LocalCenter;	//local center of mass position
+		public sVector2 C0, C; //local center of mass position
+		public sfloat A0, A; //world angles
+		public sfloat T0; //time interval = [T0,1], where T0 is in [0,1]
 
 		/// <summary>
 		/// Get the interpolated Transform at a specific time.
 		/// </summary>
 		/// <param name="alpha">Alpha is a factor in [0,1], where 0 indicates t0.</param>
-		public void GetTransform(out Transform xf, float alpha)
+		public void GetTransform(out Transform xf, sfloat alpha)
 		{
 			xf = new Transform();
-			xf.position = (1.0f - alpha) * C0 + alpha * C;
-			float angle = (1.0f - alpha) * A0 + alpha * A;
+			xf.position = (sfloat.One - alpha) * C0 + alpha * C;
+			sfloat angle = (sfloat.One - alpha) * A0 + alpha * A;
 			
 			xf.rotation = Box2DX.Common.Math.AngleToRotation(angle);
 			//xf.R = new Mat22(angle);
@@ -58,13 +58,13 @@ namespace Box2DX.Common
 		/// Advance the sweep forward, yielding a new initial state.
 		/// </summary>
 		/// <param name="t">The new initial time.</param>
-		public void Advance(float t)
+		public void Advance(sfloat t)
 		{
-			if (T0 < t && 1.0f - T0 > Settings.FLT_EPSILON)
+			if (T0 < t && sfloat.One - T0 > Settings.FLT_EPSILON)
 			{
-				float alpha = (t - T0) / (1.0f - T0);
-				C0 = (1.0f - alpha) * C0 + alpha * C;
-				A0 = (1.0f - alpha) * A0 + alpha * A;
+				sfloat alpha = (t - T0) / (sfloat.One - T0);
+				C0 = (sfloat.One - alpha) * C0 + alpha * C;
+				A0 = (sfloat.One - alpha) * A0 + alpha * A;
 				T0 = t;
 			}
 		}
