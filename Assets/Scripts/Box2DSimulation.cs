@@ -46,7 +46,7 @@ public class Box2DSimulation : MonoBehaviour
         if(!useCustomBox2D){
             return;
         }
-        Debug.Log("Stepping");
+        // Debug.Log("Stepping");
         // Debug.Log(Time.fixedDeltaTime);
         // Debug.Log(world._broadPhase._worldAABB.Center);
         // Debug.Log(world._broadPhase._worldAABB.Extents);

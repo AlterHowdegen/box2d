@@ -192,8 +192,11 @@ namespace Box2DX.Dynamics
 		public int bodyID;
 		
 		static int bodyCount = 0;
-		
-		internal Body(BodyDef bd, World world)
+        private Box2DRigidbody _box2DRigidbody;
+
+        public Box2DRigidbody Box2DRigidbody { get => _box2DRigidbody; }
+
+        internal Body(BodyDef bd, World world)
 		{
 			Box2DXDebug.Assert(world._lock == false);
 
@@ -1103,5 +1106,10 @@ namespace Box2DX.Dynamics
 			_sweep.A = _sweep.A0;
 			SynchronizeTransform();
 		}
-	}
+
+        internal void SetBehavior(Box2DRigidbody box2DRigidbody)
+        {
+            _box2DRigidbody = box2DRigidbody;
+        }
+    }
 }

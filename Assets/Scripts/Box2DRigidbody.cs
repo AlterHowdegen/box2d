@@ -6,13 +6,15 @@ using Box2DX.Dynamics;
 using Box2DX.Collision;
 using System;
 using SoftFloat;
+using UnityEngine.Events;
 
 public class Box2DRigidbody : MonoBehaviour, ContactListener
 {
-    public Body body;
-    public Rigidbody2D _originalRigidbody;
-    public Collider2D _originalCollider;
-    private ContactListener _contactListener;
+    [SerializeField] private Body body;
+    private Rigidbody2D _originalRigidbody;
+    private Collider2D _originalCollider;
+    public UnityEventContact onBeginContactEvent;
+    [SerializeField] private bool logContact;
 
     private void Awake(){
         _originalRigidbody = GetComponent<Rigidbody2D>();
@@ -56,6 +58,7 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
             fixtureDefinition.Density = (sfloat)_originalCollider.density;
             fixtureDefinition.Friction = (sfloat)0.6f;
             fixtureDefinition.Restitution = (sfloat)0.5f; 
+            body.SetBehavior(this);
             body.CreateFixture(fixtureDefinition);
         }else if(_originalCollider is CircleCollider2D){
             Debug.Log("Creating circle fixture");
@@ -64,6 +67,7 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
             fixtureDefinition.Friction = (sfloat)0.6f;
             fixtureDefinition.Restitution = (sfloat)0.5f; 
             fixtureDefinition.Radius = (sfloat)((CircleCollider2D)_originalCollider).radius;
+            body.SetBehavior(this);
             body.CreateFixture(fixtureDefinition);
         }else{
             Debug.Log("Creating generic fixture");
@@ -100,7 +104,9 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
 
     public void BeginContact(Contact contact)
     {
-        Debug.Log(contact);
+        LogContact(contact);
+        onBeginContactEvent.Invoke(contact);
+        Effects.instance.Impact(contact);
     }
 
     public void EndContact(Contact contact)
@@ -132,4 +138,15 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
     // }
 
     // #endif
+    public void LogContact(Contact contact){
+        Debug.Log(contact);
+
+        Debug.Log(contact.FixtureA.Body.Box2DRigidbody);
+        Debug.Log(contact.FixtureB.Body.Box2DRigidbody);
+    }
+}
+
+[System.Serializable]
+public class UnityEventContact: UnityEvent<Contact>
+{
 }
