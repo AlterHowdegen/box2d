@@ -579,7 +579,7 @@ PlayerSettings:
   webGLThreadsSupport: 0
   webGLWasmStreaming: 0
   scriptingDefineSymbols:
-    1: USE_MATRIX_FOR_ROTATION;ALLOWUNSAFE
+    1: USE_MATRIX_FOR_ROTATION
   platformArchitecture: {}
   scriptingBackend:
     Standalone: 1
