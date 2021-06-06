@@ -50,8 +50,7 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         _currentPosition = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
 
         _previousRotation = _currentRotation;
-        var angle = (float)body.GetAngle();
-        var euler = new Vector3(0f, 0f, angle * Mathf.Rad2Deg);
+        var euler = new Vector3(0f, 0f, (float)body.GetAngle() * Mathf.Rad2Deg);
         _currentRotation = Quaternion.Euler(euler);
 
         // var newPosition = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
