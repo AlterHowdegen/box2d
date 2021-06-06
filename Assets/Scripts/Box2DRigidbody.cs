@@ -56,8 +56,8 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
     public void BeginContact(Contact contact)
     {
         // Debug.Log($"{gameObject}: {logContact}");
-        // if(logContact)
-        //     LogContact(contact);
+        if(logContact)
+            LogContact(contact);
         onBeginContactEvent.Invoke(contact);
         // Effects.instance.Impact(contact);
     }
@@ -92,7 +92,7 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
 
     // #endif
     public void LogContact(Contact contact){
-        // Debug.Log(contact);
+        Debug.Log(contact);
 
         // Debug.Log(contact.FixtureA.Body.Box2DRigidbody);
         // Debug.Log(contact.FixtureB.Body.Box2DRigidbody);

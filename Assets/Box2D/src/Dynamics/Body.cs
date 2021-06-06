@@ -635,12 +635,12 @@ namespace Box2DX.Dynamics
 		/// Set the world body origin position.
 		/// </summary>
 		/// <param name="position">The new position of the body.</param>
-		public void SetPosition(sVector2 position)
+		public bool SetPosition(sVector2 position)
 		{
 #if USE_MATRIX_FOR_ROTATION
-			SetTransform(position, new Mat22(GetAngle()));
+			return SetTransform(position, new Mat22(GetAngle()));
 #else
-			SetTransform(position, Box2DX.Common.Math.AngleToRotation(GetAngle()));
+			return SetTransform(position, Box2DX.Common.Math.AngleToRotation(GetAngle()));
 #endif
 		}
 

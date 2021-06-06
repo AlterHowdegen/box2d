@@ -35,6 +35,8 @@ public class Box2DSimulation : MonoBehaviour
         world = new World(aabb, gravity, doSleep);
         // world.GetGroundBody().SetPosition(sVector2.zero);
 
+        Time.fixedDeltaTime = (float)timestep;
+
         SetBodies();
     }
 
@@ -50,7 +52,6 @@ public class Box2DSimulation : MonoBehaviour
             box2DRigidbody.GatherParts();
             SetBody(box2DRigidbody);
         }
-        _initialized = true;
     }
 
     // Only use this to add bodies to the simulation after it has already been initialized
@@ -105,6 +106,7 @@ public class Box2DSimulation : MonoBehaviour
             fixtureDefinition.Density = (sfloat)originalCollider.density;
             fixtureDefinition.Friction = (sfloat)0.6f;
             fixtureDefinition.Restitution = (sfloat)0.5f; 
+            fixtureDefinition.IsSensor = originalCollider.isTrigger;
             fixtureDefinition.SetAsBox((sfloat)(((BoxCollider2D)originalCollider).size.x) / (sfloat)2f, (sfloat)(((BoxCollider2D)originalCollider).size.y) / (sfloat)2f);
             body.SetBehavior(box2DRigidbody);
             body.CreateFixture(fixtureDefinition);
@@ -113,7 +115,8 @@ public class Box2DSimulation : MonoBehaviour
             var fixtureDefinition = new CircleDef();
             fixtureDefinition.Density = (sfloat)originalCollider.density;
             fixtureDefinition.Friction = (sfloat)0.6f;
-            fixtureDefinition.Restitution = (sfloat)0.5f; 
+            fixtureDefinition.Restitution = (sfloat)0.5f;
+            fixtureDefinition.IsSensor = originalCollider.isTrigger;
             fixtureDefinition.Radius = (sfloat)((CircleCollider2D)originalCollider).radius;
             body.SetBehavior(box2DRigidbody);
             body.CreateFixture(fixtureDefinition);
@@ -161,6 +164,8 @@ public class Box2DSimulation : MonoBehaviour
         // {
             
         // }
+
+        _initialized = true;
 
         // Debug.Log(world._contactList);
     }

@@ -11,7 +11,7 @@ public class Effects : MonoBehaviour
         instance = this;
     }
     public void Impact(Contact contact){
-        // Debug.Log($"Impact: {contact.Manifold.LocalPoint}");
+        Debug.Log($"Impact: {contact.Manifold.LocalPoint}");
         transform.position = (Vector2)contact.FixtureB.Body.Box2DRigidbody.transform.position + new Vector2((float)contact.Manifold.LocalPoint.x, (float)contact.Manifold.LocalPoint.y);
         particleSystem.Emit(10);
     }
