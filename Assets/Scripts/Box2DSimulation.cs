@@ -5,6 +5,8 @@ using Box2DX;
 using Box2DX.Dynamics;
 using Box2DX.Collision;
 using SoftFloat;
+using System.Threading;
+using System;
 
 public class Box2DSimulation : MonoBehaviour
 {
@@ -14,13 +16,16 @@ public class Box2DSimulation : MonoBehaviour
     public sVector2 gravity = new sVector2(0f, -10f);
     public bool doSleep;
     public sVector2 center = sVector2.zero;
-    public sVector2 lowerBound = new sVector2(-40f, -40f);
-    public sVector2 upperBound = new sVector2(40f, 40f);
+    public sVector2 lowerBound = new sVector2(-80f, -80f);
+    public sVector2 upperBound = new sVector2(80f, 80f);
     private int velocityIteration = 6;
     private int positionIteration = 2;
     public sfloat timestep = (sfloat)0.02f;
     [SerializeField] private Box2DRigidbody[] _box2DRigidbodies;
     internal bool _initialized;
+    private ThreadStart childref;
+    private Thread childThread;
+    private bool _threadRunning;
 
     private void Awake(){
         instance = this;
@@ -156,7 +161,26 @@ public class Box2DSimulation : MonoBehaviour
         // Debug.Log(world._broadPhase._worldAABB.Center);
         // Debug.Log(world._broadPhase._worldAABB.Extents);
         // Debug.Log(world.GetBodyCount());
-        world.Step(timestep, velocityIteration, positionIteration);
+
+        // childref = new ThreadStart(CallToChildThread);
+
+
+        // Debug.Log("In Main: Creating the Child thread");
+
+        if(_threadRunning){
+            Debug.Log("Previous thread not finished");
+            return;
+        }
+
+        ThreadPool.QueueUserWorkItem(StepThread);
+
+        // if(childThread != null && childThread.IsAlive){
+        //     Debug.Log("Previous thread not finished");
+        //     return;
+        // }
+         
+        // childThread = new Thread(childref);
+        // childThread.Start();
 
         // Debug.Log(world.GetContactCount());
 
@@ -165,12 +189,19 @@ public class Box2DSimulation : MonoBehaviour
             
         // }
 
-        _initialized = true;
-
         // Debug.Log(world._contactList);
     }
 
-    
+    private void StepThread(object stateInfo)
+    {
+        _threadRunning = true;
+        Debug.Log("Starting thread");
+        world.Step(timestep, velocityIteration, positionIteration);
+        _initialized = true;
+        Debug.Log("Thread done");
+        _threadRunning = false;
+    }
+
     private void OnDisable(){
         world.Dispose();
     }
