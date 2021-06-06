@@ -53,11 +53,10 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         if(_originalCollider is BoxCollider2D){
             Debug.Log("Creating polygon fixture");
             var fixtureDefinition = new PolygonDef();
-            fixtureDefinition.SetAsBox((sfloat)(((BoxCollider2D)_originalCollider).size.x) / (sfloat)2f, (sfloat)(((BoxCollider2D)_originalCollider).size.y) / (sfloat)2f);
-            fixtureDefinition.Type = ShapeType.PolygonShape;
             fixtureDefinition.Density = (sfloat)_originalCollider.density;
             fixtureDefinition.Friction = (sfloat)0.6f;
             fixtureDefinition.Restitution = (sfloat)0.5f; 
+            fixtureDefinition.SetAsBox((sfloat)(((BoxCollider2D)_originalCollider).size.x) / (sfloat)2f, (sfloat)(((BoxCollider2D)_originalCollider).size.y) / (sfloat)2f);
             body.SetBehavior(this);
             body.CreateFixture(fixtureDefinition);
         }else if(_originalCollider is CircleCollider2D){
@@ -104,9 +103,11 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
 
     public void BeginContact(Contact contact)
     {
-        LogContact(contact);
+        // Debug.Log($"{gameObject}: {logContact}");
+        // if(logContact)
+        //     LogContact(contact);
         onBeginContactEvent.Invoke(contact);
-        Effects.instance.Impact(contact);
+        // Effects.instance.Impact(contact);
     }
 
     public void EndContact(Contact contact)
@@ -139,10 +140,12 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
 
     // #endif
     public void LogContact(Contact contact){
-        Debug.Log(contact);
+        // Debug.Log(contact);
 
-        Debug.Log(contact.FixtureA.Body.Box2DRigidbody);
-        Debug.Log(contact.FixtureB.Body.Box2DRigidbody);
+        // Debug.Log(contact.FixtureA.Body.Box2DRigidbody);
+        // Debug.Log(contact.FixtureB.Body.Box2DRigidbody);
+
+        Effects.instance.Impact(contact);
     }
 }
 
