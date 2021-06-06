@@ -16,7 +16,15 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
     public UnityEventContact onBeginContactEvent;
     [SerializeField] private bool logContact;
 
+    public Body Body { get => body; }
+
     private void Awake(){
+        if(Box2DSimulation.instance == null)
+            return;
+            
+        if(Box2DSimulation.instance._initialized){
+            Box2DSimulation.instance.AddBody(this);
+        }
     }
 
     public void GatherParts(){
@@ -90,6 +98,10 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         // Debug.Log(contact.FixtureB.Body.Box2DRigidbody);
 
         Effects.instance.Impact(contact);
+    }
+
+    private void OnDisable(){
+        Box2DSimulation.instance.RemoveBody(this);
     }
 }
 

@@ -20,6 +20,7 @@ public class Box2DSimulation : MonoBehaviour
     private int positionIteration = 2;
     public sfloat timestep = (sfloat)0.02f;
     [SerializeField] private Box2DRigidbody[] _box2DRigidbodies;
+    internal bool _initialized;
 
     private void Awake(){
         instance = this;
@@ -49,6 +50,17 @@ public class Box2DSimulation : MonoBehaviour
             box2DRigidbody.GatherParts();
             SetBody(box2DRigidbody);
         }
+        _initialized = true;
+    }
+
+    // Only use this to add bodies to the simulation after it has already been initialized
+    public void AddBody(Box2DRigidbody box2DRigidbody){
+        if(!Box2DSimulation.instance.useCustomBox2D){
+            return;
+        }
+
+        box2DRigidbody.GatherParts();
+        SetBody(box2DRigidbody);
     }
 
     // Execute at runtime
@@ -121,6 +133,11 @@ public class Box2DSimulation : MonoBehaviour
         
         Destroy(originalRigidbody);
         Destroy(originalCollider);
+    }
+
+    public void RemoveBody(Box2DRigidbody box2DRigidbody){
+        world.DestroyBody(box2DRigidbody.Body);
+        // box2DRigidbody.Body
     }
 
     private void Start(){
