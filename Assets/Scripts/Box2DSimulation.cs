@@ -21,7 +21,7 @@ public class Box2DSimulation : MonoBehaviour
     public sVector2 upperBound = new sVector2(80f, 80f);
     private int velocityIteration = 6;
     private int positionIteration = 2;
-    public sfloat timestep = (sfloat)0.03f;
+    public sfloat timestep = (sfloat)0.02f;
     [SerializeField] private Box2DRigidbody[] _box2DRigidbodies;
     internal bool _initialized;
     private ThreadStart childref;
@@ -130,6 +130,23 @@ public class Box2DSimulation : MonoBehaviour
             fixtureDefinition.Restitution = (sfloat)0.5f;
             fixtureDefinition.IsSensor = originalCollider.isTrigger;
             fixtureDefinition.Radius = (sfloat)((CircleCollider2D)originalCollider).radius;
+            body.SetBehavior(box2DRigidbody);
+            body.CreateFixture(fixtureDefinition);
+        }else if(originalCollider is PolygonCollider2D){
+            var fixtureDefinition = new PolygonDef();
+            fixtureDefinition.Density = (sfloat)originalCollider.density;
+            fixtureDefinition.Friction = (sfloat)0.6f;
+            fixtureDefinition.Restitution = (sfloat)0.5f; 
+            fixtureDefinition.IsSensor = originalCollider.isTrigger;
+            var originalPolygonCollider = (PolygonCollider2D)originalCollider;
+            fixtureDefinition.Vertices = new sVector2[originalPolygonCollider.points.Length];
+            Debug.Log(originalPolygonCollider.points.Length);
+            fixtureDefinition.VertexCount = originalPolygonCollider.points.Length;
+            for (int i = 0; i < originalPolygonCollider.points.Length; i++)
+            {
+                Debug.Log(originalPolygonCollider.points[i]);
+                fixtureDefinition.Vertices[i] = new sVector2(originalPolygonCollider.points[i].x, originalPolygonCollider.points[i].y);
+            }
             body.SetBehavior(box2DRigidbody);
             body.CreateFixture(fixtureDefinition);
         }else{

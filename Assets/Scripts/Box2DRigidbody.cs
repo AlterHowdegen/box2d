@@ -149,6 +149,29 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         Gizmos.DrawCube(_previousPosition, Vector3.one * 0.1f);
         Gizmos.color = UnityEngine.Color.green;
         Gizmos.DrawCube(_currentPosition, Vector3.one * 0.1f);
+
+        if(body == null)
+            return;
+
+        if(body._fixtureList == null)
+            return;
+
+        if(body._fixtureList.ShapeType == ShapeType.PolygonShape){
+            var polygonShape = (PolygonShape)body._fixtureList.Shape;
+            for (int i = 0; i <= polygonShape.VertexCount - 1; i++)
+            {
+                var vertexA = polygonShape.GetVertex(i);
+                var vertexB = polygonShape.GetVertex(i + 1);
+                var positionA = transform.position + new Vector3((float)vertexA.x, (float)vertexA.y);
+                var positionB = transform.position + new Vector3((float)vertexB.x, (float)vertexB.y);
+
+                positionA = transform.rotation * (positionA - transform.position) + transform.position;
+                positionB = transform.rotation * (positionB - transform.position) + transform.position;
+
+                
+                Gizmos.DrawLine(positionA, positionB);
+            }    
+        }
     }
     #endif
 }
