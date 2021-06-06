@@ -16,6 +16,10 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
     public UnityEventContact onBeginContactEvent;
     [SerializeField] private bool logContact;
     private float _lastUpdateTimestamp;
+    private Vector2 _currentPosition;
+    private Vector2 _previousPosition;
+    private Quaternion _currentRotation = Quaternion.identity;
+    private Quaternion _previousRotation = Quaternion.identity;
 
     public Body Body { get => body; }
 
@@ -37,48 +41,44 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         this.body = body;
     }
 
-    // private void FixedUpdate(){
-    //     if(!Box2DSimulation.instance.useCustomBox2D){
-    //         return;
-    //     }
+    private void FixedUpdate(){
+        if(!Box2DSimulation.instance.useCustomBox2D){
+            return;
+        }
 
-    //     var newPosition = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
-    //     var newRotation = Quaternion.Euler(new Vector3(0f, 0f, (float)body.GetAngle() * Mathf.Rad2Deg));
+        _previousPosition = _currentPosition;
+        _currentPosition = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
 
-    //     transform.position = newPosition;
-    //     transform.rotation = newRotation;
+        _previousRotation = _currentRotation;
+        var angle = (float)body.GetAngle();
+        var euler = new Vector3(0f, 0f, angle * Mathf.Rad2Deg);
+        _currentRotation = Quaternion.Euler(euler);
 
-    //     _lastUpdateTimestamp = Time.timeSinceLevelLoad;
-    // }
+        // var newPosition = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
+        // var newRotation = Quaternion.Euler(new Vector3(0f, 0f, (float)body.GetAngle() * Mathf.Rad2Deg));
+
+        // transform.position = newPosition;
+        // transform.rotation = newRotation;
+
+        _lastUpdateTimestamp = Time.timeSinceLevelLoad;
+    }
 
     private void Update(){
         if(!Box2DSimulation.instance.useCustomBox2D){
             return;
         }
 
-        // Interpolate by how much
-
-        var position = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
-
-        // var deltaTime = 0.001f;
-
-        var deltaTime = (Time.timeSinceLevelLoad - Box2DSimulation.instance.LastUpdateTimestamp);
-        Debug.Log(deltaTime);
-
-        var positionDelta =  new Vector2((float)body._linearVelocity.x, (float)body._linearVelocity.y);
-        var translation = positionDelta * deltaTime;
-        position = position + translation;
+        // var deltaTime = (Time.timeSinceLevelLoad - Box2DSimulation.instance.LastUpdateTimestamp) / Time.fixedDeltaTime;
+        var deltaTime = (Time.timeSinceLevelLoad - _lastUpdateTimestamp) / Time.fixedDeltaTime;
+        // Debug.Log(deltaTime);
+        //   new Vector2((float)body._linearVelocity.x, (float)body._linearVelocity.y);
+        // var translation = positionDelta * deltaTime;
+        // position = position + translation;
 
 
-        transform.position = position;
+        transform.position = Vector2.Lerp(_previousPosition, _currentPosition, deltaTime);
 
-        var angle = (float)body.GetAngle();
-        var engleDelta = angle + (float)body._angularVelocity * deltaTime;
-        var euler = new Vector3(0f, 0f, engleDelta * Mathf.Rad2Deg);
-        
-        var rotation = Quaternion.Euler(euler);
-
-        transform.rotation = rotation;
+        transform.rotation = Quaternion.Lerp(_previousRotation, _currentRotation, deltaTime);
 
 
         // Debug.Log(body.IsDynamic());
@@ -142,6 +142,15 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
     private void OnDisable(){
         Box2DSimulation.instance.RemoveBody(this);
     }
+
+    #if UNITY_EDITOR
+    private void OnDrawGizmosSelected(){
+        Gizmos.color = UnityEngine.Color.red;
+        Gizmos.DrawCube(_previousPosition, Vector3.one * 0.1f);
+        Gizmos.color = UnityEngine.Color.green;
+        Gizmos.DrawCube(_currentPosition, Vector3.one * 0.1f);
+    }
+    #endif
 }
 
 [System.Serializable]

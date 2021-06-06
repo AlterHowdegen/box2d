@@ -21,7 +21,7 @@ public class Box2DSimulation : MonoBehaviour
     public sVector2 upperBound = new sVector2(80f, 80f);
     private int velocityIteration = 6;
     private int positionIteration = 2;
-    public sfloat timestep = (sfloat)0.02f;
+    public sfloat timestep = (sfloat)0.03f;
     [SerializeField] private Box2DRigidbody[] _box2DRigidbodies;
     internal bool _initialized;
     private ThreadStart childref;
@@ -85,8 +85,8 @@ public class Box2DSimulation : MonoBehaviour
         var originalRigidbody = box2DRigidbody._originalRigidbody;
         var originalCollider = box2DRigidbody._originalCollider;
 
-        Debug.Log(originalRigidbody);
-        Debug.Log(originalCollider);
+        // Debug.Log(originalRigidbody);
+        // Debug.Log(originalCollider);
 
         // Create body
 
@@ -113,7 +113,7 @@ public class Box2DSimulation : MonoBehaviour
         // Create fixture
 
         if(originalCollider is BoxCollider2D){
-            Debug.Log("Creating polygon fixture");
+            // Debug.Log("Creating polygon fixture");
             var fixtureDefinition = new PolygonDef();
             fixtureDefinition.Density = (sfloat)originalCollider.density;
             fixtureDefinition.Friction = (sfloat)0.6f;
@@ -123,7 +123,7 @@ public class Box2DSimulation : MonoBehaviour
             body.SetBehavior(box2DRigidbody);
             body.CreateFixture(fixtureDefinition);
         }else if(originalCollider is CircleCollider2D){
-            Debug.Log("Creating circle fixture");
+            // Debug.Log("Creating circle fixture");
             var fixtureDefinition = new CircleDef();
             fixtureDefinition.Density = (sfloat)originalCollider.density;
             fixtureDefinition.Friction = (sfloat)0.6f;
