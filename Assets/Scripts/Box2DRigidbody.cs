@@ -157,10 +157,17 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
 
         if(body._fixtureList.ShapeType == ShapeType.PolygonShape){
             var polygonShape = (PolygonShape)body._fixtureList.Shape;
-            for (int i = 0; i <= polygonShape.VertexCount - 1; i++)
+            var g = 0f;
+            for (int i = 0; i < polygonShape.VertexCount; i++)
             {
-                var vertexA = polygonShape.GetVertex(i);
-                var vertexB = polygonShape.GetVertex(i + 1);
+                g = (float)i / (float)polygonShape.VertexCount;
+                // Debug.Log(g);
+                Gizmos.color = new UnityEngine.Color(g, 1f - g, 0f);
+                var vertexA = polygonShape._vertices[i];
+                var iPlusOneOrZero = i >= polygonShape.VertexCount - 1 ? 0 : i + 1;
+                var vertexB = polygonShape._vertices[iPlusOneOrZero];
+                Debug.Log($"{i}: {vertexA}");
+                Debug.Log($"{iPlusOneOrZero}: {vertexB}");
                 var positionA = transform.position + new Vector3((float)vertexA.x, (float)vertexA.y);
                 var positionB = transform.position + new Vector3((float)vertexB.x, (float)vertexB.y);
 
