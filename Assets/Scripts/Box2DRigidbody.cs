@@ -11,77 +11,21 @@ using UnityEngine.Events;
 public class Box2DRigidbody : MonoBehaviour, ContactListener
 {
     [SerializeField] private Body body;
-    private Rigidbody2D _originalRigidbody;
-    private Collider2D _originalCollider;
+    internal Rigidbody2D _originalRigidbody;
+    internal Collider2D _originalCollider;
     public UnityEventContact onBeginContactEvent;
     [SerializeField] private bool logContact;
 
     private void Awake(){
+    }
+
+    public void GatherParts(){
         _originalRigidbody = GetComponent<Rigidbody2D>();
         _originalCollider = GetComponent<Collider2D>();
     }
 
-    private void Start(){
-        if(!Box2DSimulation.instance.useCustomBox2D){
-            return;
-        }
-
-        // Create body
-
-        var bodyDefinition = new BodyDef();
-        bodyDefinition.MassData = new MassData();
-        bodyDefinition.MassData.Mass = (sfloat)_originalRigidbody.mass < (sfloat)0.1f ? sfloat.Zero : (sfloat)_originalRigidbody.mass;
-        bodyDefinition.MassData.I = (sfloat)_originalRigidbody.mass < (sfloat)0.1f ? sfloat.Zero : (sfloat)_originalRigidbody.mass;
-        bodyDefinition.Position = new sVector2(_originalRigidbody.position.x, _originalRigidbody.position.y);
-        bodyDefinition.Angle = (sfloat)transform.eulerAngles.z * libm.Deg2Rad;
-        // bodyDefinition.FixedRotation = _originalRigidbody.freezeRotation;
-        // bodyDefinition.AngularDamping = _originalRigidbody.angularDrag;
-        bodyDefinition.FixedRotation = false;
-        bodyDefinition.LinearDamping = (sfloat)_originalRigidbody.drag;
-        bodyDefinition.AngularDamping = (sfloat)_originalRigidbody.angularDrag;
-        // bodyDefinition.AngularVelocity= 1f;
-        // bodyDefinition.
-        bodyDefinition.AllowSleep = true;
-        // bodyDefinition.AngularVelocity = 10f;
-
-        // bodyDefinition.
-        
-        body = Box2DSimulation.instance.world.CreateBody(bodyDefinition);
-
-        // Create fixture
-
-        if(_originalCollider is BoxCollider2D){
-            Debug.Log("Creating polygon fixture");
-            var fixtureDefinition = new PolygonDef();
-            fixtureDefinition.Density = (sfloat)_originalCollider.density;
-            fixtureDefinition.Friction = (sfloat)0.6f;
-            fixtureDefinition.Restitution = (sfloat)0.5f; 
-            fixtureDefinition.SetAsBox((sfloat)(((BoxCollider2D)_originalCollider).size.x) / (sfloat)2f, (sfloat)(((BoxCollider2D)_originalCollider).size.y) / (sfloat)2f);
-            body.SetBehavior(this);
-            body.CreateFixture(fixtureDefinition);
-        }else if(_originalCollider is CircleCollider2D){
-            Debug.Log("Creating circle fixture");
-            var fixtureDefinition = new CircleDef();
-            fixtureDefinition.Density = (sfloat)_originalCollider.density;
-            fixtureDefinition.Friction = (sfloat)0.6f;
-            fixtureDefinition.Restitution = (sfloat)0.5f; 
-            fixtureDefinition.Radius = (sfloat)((CircleCollider2D)_originalCollider).radius;
-            body.SetBehavior(this);
-            body.CreateFixture(fixtureDefinition);
-        }else{
-            Debug.Log("Creating generic fixture");
-            var fixtureDefinition = new FixtureDef();
-            body.CreateFixture(fixtureDefinition);
-        }
-
-        // Set contact listener
-
-        Box2DSimulation.instance.world.SetContactListener(this);
-
-        // Destroy unity 2D physics components
-        
-        Destroy(_originalRigidbody);
-        Destroy(_originalCollider);
+    internal void SetBody(Body body){
+        this.body = body;
     }
 
     private void FixedUpdate(){
