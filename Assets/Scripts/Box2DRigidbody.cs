@@ -15,6 +15,7 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
     internal Collider2D _originalCollider;
     public UnityEventContact onBeginContactEvent;
     [SerializeField] private bool logContact;
+    private float _lastUpdateTimestamp;
 
     public Body Body { get => body; }
 
@@ -36,12 +37,50 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
         this.body = body;
     }
 
-    private void FixedUpdate(){
+    // private void FixedUpdate(){
+    //     if(!Box2DSimulation.instance.useCustomBox2D){
+    //         return;
+    //     }
+
+    //     var newPosition = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
+    //     var newRotation = Quaternion.Euler(new Vector3(0f, 0f, (float)body.GetAngle() * Mathf.Rad2Deg));
+
+    //     transform.position = newPosition;
+    //     transform.rotation = newRotation;
+
+    //     _lastUpdateTimestamp = Time.timeSinceLevelLoad;
+    // }
+
+    private void Update(){
         if(!Box2DSimulation.instance.useCustomBox2D){
             return;
         }
-        transform.position = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
-        transform.eulerAngles = new Vector3(0f, 0f, (float)body.GetAngle() * Mathf.Rad2Deg);
+
+        // Interpolate by how much
+
+        var position = new Vector2((float)body.GetPosition().x, (float)body.GetPosition().y);
+
+        // var deltaTime = 0.001f;
+
+        var deltaTime = (Time.timeSinceLevelLoad - Box2DSimulation.instance.LastUpdateTimestamp);
+        Debug.Log(deltaTime);
+
+        var positionDelta =  new Vector2((float)body._linearVelocity.x, (float)body._linearVelocity.y);
+        var translation = positionDelta * deltaTime;
+        position = position + translation;
+
+
+        transform.position = position;
+
+        var angle = (float)body.GetAngle();
+        var engleDelta = angle + (float)body._angularVelocity * deltaTime;
+        var euler = new Vector3(0f, 0f, engleDelta * Mathf.Rad2Deg);
+        
+        var rotation = Quaternion.Euler(euler);
+
+        transform.rotation = rotation;
+
+
         // Debug.Log(body.IsDynamic());
         // Debug.Log(body._xf.position);
         // Debug.Log(body.GetAngle());

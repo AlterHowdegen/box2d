@@ -28,6 +28,9 @@ public class Box2DSimulation : MonoBehaviour
     private Thread childThread;
     private bool _threadRunning;
     private List<Box2DRigidbody> _bodiesToAdd;
+    private float _lastUpdateTimestamp;
+
+    public float LastUpdateTimestamp { get => _lastUpdateTimestamp; }
 
     private void Awake(){
         instance = this;
@@ -160,6 +163,9 @@ public class Box2DSimulation : MonoBehaviour
         if(!useCustomBox2D){
             return;
         }
+
+        _lastUpdateTimestamp = Time.timeSinceLevelLoad;
+
         // Debug.Log("Stepping");
         // Debug.Log(Time.fixedDeltaTime);
         // Debug.Log(world._broadPhase._worldAABB.Center);
@@ -197,14 +203,14 @@ public class Box2DSimulation : MonoBehaviour
 
         // Loop over contacts
 
-        Debug.Log(world._contactCount);
+        // Debug.Log(world._contactCount);
 
         var counter = 0;
 
         var contactList = world._contactList;
 
         while(contactList != null && counter < world._contactCount){
-            Debug.Log(contactList.FixtureA.Body.Box2DRigidbody.gameObject);
+            // Debug.Log(contactList.FixtureA.Body.Box2DRigidbody.gameObject);
             contactList = world._contactList.GetNext();
             counter++;
         }
