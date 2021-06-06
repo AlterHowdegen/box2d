@@ -12,6 +12,7 @@ public class Box2DSimulation : MonoBehaviour
 {
     public static Box2DSimulation instance;
     public bool useCustomBox2D;
+    public bool useMultiThreading;
     public World world;
     public sVector2 gravity = new sVector2(0f, -10f);
     public bool doSleep;
@@ -26,6 +27,7 @@ public class Box2DSimulation : MonoBehaviour
     private ThreadStart childref;
     private Thread childThread;
     private bool _threadRunning;
+    private List<Box2DRigidbody> _bodiesToAdd;
 
     private void Awake(){
         instance = this;
@@ -41,6 +43,8 @@ public class Box2DSimulation : MonoBehaviour
         // world.GetGroundBody().SetPosition(sVector2.zero);
 
         Time.fixedDeltaTime = (float)timestep;
+
+        _bodiesToAdd = new List<Box2DRigidbody>();
 
         SetBodies();
     }
@@ -66,7 +70,7 @@ public class Box2DSimulation : MonoBehaviour
         }
 
         box2DRigidbody.GatherParts();
-        SetBody(box2DRigidbody);
+        _bodiesToAdd.Add(box2DRigidbody);
     }
 
     // Execute at runtime
@@ -164,15 +168,47 @@ public class Box2DSimulation : MonoBehaviour
 
         // childref = new ThreadStart(CallToChildThread);
 
+        // Make sure bodies are only added when the world is not locked.
+
+        foreach (var body in _bodiesToAdd)
+        {
+            SetBody(body);
+        }
+
+        if(_bodiesToAdd.Count > 0){
+            _bodiesToAdd.Clear();
+        }
+
 
         // Debug.Log("In Main: Creating the Child thread");
 
-        if(_threadRunning){
-            Debug.Log("Previous thread not finished");
-            return;
+        if(useMultiThreading){
+            if(_threadRunning){
+                Debug.Log("Previous thread not finished");
+                return;
+            }
+            ThreadPool.QueueUserWorkItem(StepThread);
+        }else{
+            world.Step(timestep, velocityIteration, positionIteration);
+            _initialized = true;
+            _threadRunning = false;
         }
 
-        ThreadPool.QueueUserWorkItem(StepThread);
+
+        // Loop over contacts
+
+        Debug.Log(world._contactCount);
+
+        var counter = 0;
+
+        var contactList = world._contactList;
+
+        while(contactList != null && counter < world._contactCount){
+            Debug.Log(contactList.FixtureA.Body.Box2DRigidbody.gameObject);
+            contactList = world._contactList.GetNext();
+            counter++;
+        }
+
 
         // if(childThread != null && childThread.IsAlive){
         //     Debug.Log("Previous thread not finished");
@@ -195,10 +231,10 @@ public class Box2DSimulation : MonoBehaviour
     private void StepThread(object stateInfo)
     {
         _threadRunning = true;
-        Debug.Log("Starting thread");
+        // Debug.Log("Starting thread");
         world.Step(timestep, velocityIteration, positionIteration);
         _initialized = true;
-        Debug.Log("Thread done");
+        // Debug.Log("Thread done");
         _threadRunning = false;
     }
 
