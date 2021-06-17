@@ -22,6 +22,7 @@ public class Box2DSimulation : MonoBehaviour
     private int velocityIteration = 6;
     private int positionIteration = 2;
     public sfloat timestep = (sfloat)0.02f;
+    public sfloat timestepSum = sfloat.Zero;
     [SerializeField] private Box2DRigidbody[] _box2DRigidbodies;
     internal bool _initialized;
     private ThreadStart childref;
@@ -29,6 +30,9 @@ public class Box2DSimulation : MonoBehaviour
     private bool _threadRunning;
     private List<Box2DRigidbody> _bodiesToAdd;
     private float _lastUpdateTimestamp;
+    [Multiline(10)]
+    public string verification = "";
+    public sfloat maxTimespanSum = (sfloat)4f;
 
     public float LastUpdateTimestamp { get => _lastUpdateTimestamp; }
 
@@ -140,11 +144,11 @@ public class Box2DSimulation : MonoBehaviour
             fixtureDefinition.IsSensor = originalCollider.isTrigger;
             var originalPolygonCollider = (PolygonCollider2D)originalCollider;
             fixtureDefinition.Vertices = new sVector2[originalPolygonCollider.points.Length];
-            Debug.Log(originalPolygonCollider.points.Length);
+            // Debug.Log(originalPolygonCollider.points.Length);
             fixtureDefinition.VertexCount = originalPolygonCollider.points.Length;
             for (int i = 0; i < originalPolygonCollider.points.Length; i++)
             {
-                Debug.Log(originalPolygonCollider.points[i]);
+                // Debug.Log(originalPolygonCollider.points[i]);
                 fixtureDefinition.Vertices[i] = new sVector2(originalPolygonCollider.points[i].x, originalPolygonCollider.points[i].y);
             }
             body.SetBehavior(box2DRigidbody);
@@ -181,7 +185,9 @@ public class Box2DSimulation : MonoBehaviour
             return;
         }
 
-        _lastUpdateTimestamp = Time.timeSinceLevelLoad;
+        if(timestepSum > maxTimespanSum)
+            return;
+
 
         // Debug.Log("Stepping");
         // Debug.Log(Time.fixedDeltaTime);
@@ -215,23 +221,30 @@ public class Box2DSimulation : MonoBehaviour
             world.Step(timestep, velocityIteration, positionIteration);
             _initialized = true;
             _threadRunning = false;
+            _lastUpdateTimestamp = Time.timeSinceLevelLoad;
         }
 
+        timestepSum += timestep;
 
         // Loop over contacts
+        
 
-        // Debug.Log(world._contactCount);
 
         var counter = 0;
+        var angleSum = sfloat.Zero;
 
         var contactList = world._contactList;
 
         while(contactList != null && counter < world._contactCount){
+            angleSum += contactList.FixtureA.Body.GetAngle();
             // Debug.Log(contactList.FixtureA.Body.Box2DRigidbody.gameObject);
             contactList = world._contactList.GetNext();
             counter++;
+
+
         }
 
+        Debug.Log($"{timestepSum}: {world._contactCount}, {angleSum}");
 
         // if(childThread != null && childThread.IsAlive){
         //     Debug.Log("Previous thread not finished");
@@ -249,6 +262,7 @@ public class Box2DSimulation : MonoBehaviour
         // }
 
         // Debug.Log(world._contactList);
+        verification += $"{timestepSum}: {world._contactCount}, {angleSum}\n";
     }
 
     private void StepThread(object stateInfo)
@@ -259,6 +273,7 @@ public class Box2DSimulation : MonoBehaviour
         _initialized = true;
         // Debug.Log("Thread done");
         _threadRunning = false;
+        _lastUpdateTimestamp = Time.timeSinceLevelLoad;
     }
 
     private void OnDisable(){

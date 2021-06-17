@@ -604,14 +604,14 @@ namespace Box2DX.Dynamics
 				Solve(step);
 			}
 
-			// Handle TOI events.
-			if (_continuousPhysics && step.Dt > sfloat.Zero)
-			{
-				SolveTOI(step);
-			}
+			// // Handle TOI events.
+			// if (_continuousPhysics && step.Dt > sfloat.Zero)
+			// {
+			// 	SolveTOI(step);
+			// }
 
-			// Draw debug information.
-			DrawDebugData();
+			// // Draw debug information.
+			// DrawDebugData();
 
 			_inv_dt0 = step.Inv_Dt;
 			_lock = false;

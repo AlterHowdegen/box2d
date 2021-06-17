@@ -166,8 +166,8 @@ public class Box2DRigidbody : MonoBehaviour, ContactListener
                 var vertexA = polygonShape._vertices[i];
                 var iPlusOneOrZero = i >= polygonShape.VertexCount - 1 ? 0 : i + 1;
                 var vertexB = polygonShape._vertices[iPlusOneOrZero];
-                Debug.Log($"{i}: {vertexA}");
-                Debug.Log($"{iPlusOneOrZero}: {vertexB}");
+                // Debug.Log($"{i}: {vertexA}");
+                // Debug.Log($"{iPlusOneOrZero}: {vertexB}");
                 var positionA = transform.position + new Vector3((float)vertexA.x, (float)vertexA.y);
                 var positionB = transform.position + new Vector3((float)vertexB.x, (float)vertexB.y);
 

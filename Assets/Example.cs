@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Example : MonoBehaviour
 {
     [SerializeField] private float timeScale = 1f;
+    [SerializeField] private InputField verificationInputField;
 
     private void Start(){
         Time.timeScale = timeScale;
@@ -20,6 +22,10 @@ public class Example : MonoBehaviour
     [ContextMenu("Set Time 100%")]
     public void SetTime100(){
         Time.timeScale = 1f;
+    }
+
+    private void FixedUpdate(){
+        verificationInputField.text = Box2DSimulation.instance.verification;
     }
 
 
